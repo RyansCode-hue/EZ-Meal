@@ -18,12 +18,12 @@ export function formatQuantity(q: number | null | undefined): string {
   if (q === 0) return '0';
   const whole = Math.floor(q);
   const frac = q - whole;
-  if (frac < 0.03) return String(whole);
+  if (frac < 0.02) return String(whole);
   for (const [value, glyph] of FRACTIONS) {
-    if (Math.abs(frac - value) < 0.03) return whole > 0 ? `${whole}${glyph}` : glyph;
+    if (Math.abs(frac - value) < 0.02) return whole > 0 ? `${whole}${glyph}` : glyph;
   }
   // Not a kitchen fraction: show at most two decimals, trimmed.
-  return String(Math.round(q * 100) / 100);
+  return String(Math.round((q + Number.EPSILON) * 100) / 100);
 }
 
 const UNICODE_FRACTIONS: Record<string, number> = {

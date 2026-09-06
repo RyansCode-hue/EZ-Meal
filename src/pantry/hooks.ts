@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { describeFunctionError } from '@/lib/functions';
 import { groceriesKey } from '@/groceries/hooks';
 import type { ImageForParse } from '@/recipes/hooks';
 import type { StoreSection } from '@/recipes/types';
@@ -67,22 +67,10 @@ export function useParsePantryImages() {
   return useMutation({
     mutationFn: async (images: ImageForParse[]): Promise<ParsedPantryItem[]> => {
       const { data, error } = await supabase.functions.invoke<{ items: ParsedPantryItem[] }>('parse-pantry-image', { body: { images } });
-      if (error) throw await describeFunctionError(error);
+      if (error) throw await describeFunctionError(error, 'The photo reader');
       if (!data?.items) throw new Error('The reader returned nothing.');
       return data.items;
     },
   });
 }
 
-async function describeFunctionError(error: unknown): Promise<Error> {
-  if (error instanceof FunctionsHttpError) {
-    try {
-      const body = (await error.context.json()) as { error?: string };
-      if (body?.error) return new Error(body.error);
-    } catch {
-      // not JSON
-    }
-    return new Error(`The photo reader failed (HTTP ${error.context.status}).`);
-  }
-  return error instanceof Error ? error : new Error(String(error));
-}

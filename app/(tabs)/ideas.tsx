@@ -6,6 +6,7 @@ import { useHousehold } from '@/household/useHousehold';
 import { addDays, startOfWeek, toISODate } from '@/lib/dates';
 import { describeError } from '@/lib/errors';
 import { usePantryMatches, useSuggestMeals, type ChatTurn, type Suggestion } from '@/ideas/hooks';
+import { pickSurprise as pickSurpriseRecipe } from '@/ideas/rank';
 import { useAddPlanEntry } from '@/plan/hooks';
 import { DayPickerSheet } from '@/plan/DayPickerSheet';
 import { useRecipes } from '@/recipes/hooks';
@@ -42,12 +43,8 @@ export default function IdeasTab() {
   const byId = useMemo(() => new Map((recipes.data ?? []).map((r) => [r.id, r])), [recipes.data]);
 
   function pickSurprise() {
-    const all = recipes.data ?? [];
-    if (!all.length) return setNotice('Add a few recipes first.');
-    const cutoff = Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000;
-    const fresh = all.filter((r) => !r.last_cooked_at || new Date(r.last_cooked_at).getTime() < cutoff);
-    const pool = (fresh.length ? fresh : all).filter((r) => r.id !== surprise);
-    const pick = (pool.length ? pool : all)[Math.floor(Math.random() * (pool.length ? pool.length : all.length))];
+    const pick = pickSurpriseRecipe(recipes.data ?? [], surprise, RECENT_DAYS);
+    if (!pick) return setNotice('Add a few recipes first.');
     setSurprise(pick.id);
   }
 

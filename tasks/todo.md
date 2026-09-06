@@ -81,6 +81,9 @@ Spec: docs/SPEC.md
 - [x] Invite code now creates the account: `redeem-invite` function (service role, validated, 10 failed tries per hour per address, rolls back on failure); sign-up screen asks for the code, name, email, password; public sign-up stays closed
 - [x] Invite sign-up failed live with "not found": the hosted project grants `service_role` no table privileges by default, so the lookup errored and was reported as a miss. Fixed with `20260909100000_service_role_grants.sql`; the function now reports lookup errors as errors. This also unblocks `notify-partner`, which reads under the same role.
 - [x] "Could not load your household. JSON object requested, multiple rows" once a second member joined: the membership lookup used maybeSingle() without filtering by user id, and RLS returns every member's row. Now filtered by the caller's id (also in the household settings update).
+- [x] Recipe import: files upload to the private bucket one at a time and the reader fetches them (no request-size ceiling); limit raised to 10; clearer messages for size and timeout failures
+- [x] Test suite: jest-expo with unit, component, and local-Supabase integration tests (`npm test`, `npm run test:integration`); the two-member household bug has a regression test
+- [x] Android builds paused until website bugs are worked out (user request)
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 

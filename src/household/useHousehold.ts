@@ -5,14 +5,14 @@ import type { Household, HouseholdMember } from './types';
 
 export const householdKey = (userId: string | undefined) => ['household', userId] as const;
 
-type HouseholdState = {
+export type HouseholdState = {
   household: Household | null;
   members: HouseholdMember[];
 };
 
 // Members can read every row of their household, so the caller's own row must
 // be picked by user id; a bare maybeSingle() breaks as soon as a partner joins.
-async function fetchHousehold(userId: string): Promise<HouseholdState> {
+export async function fetchHousehold(userId: string): Promise<HouseholdState> {
   const { data: membership, error: mErr } = await supabase
     .from('household_members')
     .select('household_id')

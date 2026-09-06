@@ -66,7 +66,7 @@ export function useSignedPhotoUrl(path: string | null | undefined) {
   });
 }
 
-const PARSE_MAX_WIDTH = 1400;
+const PARSE_MAX_WIDTH = 1100;
 
 /** Picks up to `max` photos (library) or one (camera). Returns [] when cancelled. */
 export async function pickPhotos(source: 'camera' | 'library', max: number): Promise<PickedPhoto[]> {
@@ -89,7 +89,19 @@ export async function photoToBase64Jpeg(photo: PickedPhoto): Promise<string> {
   const ctx = ImageManipulator.manipulate(photo.uri);
   if (photo.width > PARSE_MAX_WIDTH) ctx.resize({ width: PARSE_MAX_WIDTH });
   const rendered = await ctx.renderAsync();
-  const out = await rendered.saveAsync({ compress: 0.82, format: SaveFormat.JPEG, base64: true });
+  const out = await rendered.saveAsync({ compress: 0.75, format: SaveFormat.JPEG, base64: true });
   if (!out.base64) throw new Error('Could not read the photo data.');
   return out.base64;
+}
+
+function randomId(): string {
+  return Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+}
+
+/** Uploads one import file (base64) under <household>/imports/ and returns its path. */
+export async function uploadImportFile(householdId: string, base64: string, mediaType: string, ext: string): Promise<string> {
+  const path = `${householdId}/imports/${randomId()}.${ext}`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, decode(base64), { contentType: mediaType, upsert: false });
+  if (error) throw error;
+  return path;
 }

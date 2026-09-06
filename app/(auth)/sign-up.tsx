@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Link } from 'expo-router';
-import { FunctionsHttpError } from '@supabase/supabase-js';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
 import { Notice } from '@/components/Notice';
 import { useAuth } from '@/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
+import { describeFunctionError } from '@/lib/functions';
 import { describeError } from '@/lib/errors';
 import { colors, fonts, space, type } from '@/theme/tokens';
 
@@ -36,7 +36,7 @@ export default function SignUp() {
       const { error: fnError } = await supabase.functions.invoke('redeem-invite', {
         body: { invite_code: inviteCode.trim().toUpperCase(), email: email.trim(), password, display_name: displayName.trim() },
       });
-      if (fnError) throw await describeFunctionError(fnError);
+      if (fnError) throw await describeFunctionError(fnError, 'Account creation');
       await signIn(email, password);
       // The root gate sees the session and the membership and moves into the app.
     } catch (e) {
@@ -66,18 +66,6 @@ export default function SignUp() {
   );
 }
 
-async function describeFunctionError(error: unknown): Promise<Error> {
-  if (error instanceof FunctionsHttpError) {
-    try {
-      const body = (await error.context.json()) as { error?: string };
-      if (body?.error) return new Error(body.error);
-    } catch {
-      // not JSON
-    }
-    return new Error(`Could not create the account (HTTP ${error.context.status}).`);
-  }
-  return error instanceof Error ? error : new Error(String(error));
-}
 
 const styles = StyleSheet.create({
   content: { justifyContent: 'center', flexGrow: 1 },

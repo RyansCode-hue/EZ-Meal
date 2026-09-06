@@ -7,13 +7,14 @@ import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { Notice } from '@/components/Notice';
 import { useParseRecipeFiles } from '@/recipes/hooks';
-import { cameraAvailable, photoToBase64Jpeg, pickPhotos, type PickedPhoto } from '@/recipes/photos';
+import { cameraAvailable, photoToBase64Jpeg, pickPhotos, uploadImportFile, type PickedPhoto } from '@/recipes/photos';
+import { useHousehold } from '@/household/useHousehold';
 import { pickDocuments, type PickedFile } from '@/recipes/files';
 import { stashDraft } from '@/recipes/draftStore';
 import { describeError } from '@/lib/errors';
 import { colors, fonts, radius, space, type } from '@/theme/tokens';
 
-const MAX_ITEMS = 5;
+const MAX_ITEMS = 10;
 
 type Item = { kind: 'photo'; photo: PickedPhoto } | { kind: 'file'; file: PickedFile };
 
@@ -27,7 +28,9 @@ function fileIcon(mediaType: string): React.ComponentProps<typeof Ionicons>['nam
 export default function ImportFile() {
   const router = useRouter();
   const parse = useParseRecipeFiles();
+  const { household } = useHousehold();
   const [items, setItems] = useState<Item[]>([]);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
   const room = MAX_ITEMS - items.length;
@@ -53,21 +56,31 @@ export default function ImportFile() {
   }
 
   async function onRead() {
+    if (!household) return;
     setError(null);
     setPreparing(true);
     try {
-      const files = await Promise.all(
-        items.map(async (it) =>
-          it.kind === 'photo'
-            ? { name: 'photo.jpg', media_type: 'image/jpeg', data: await photoToBase64Jpeg(it.photo) }
-            : { name: it.file.name, media_type: it.file.media_type, data: it.file.data },
-        ),
-      );
+      // Files go to the household's private bucket one at a time, so the read
+      // request itself stays tiny no matter how many pages there are.
+      const uploaded = [];
+      for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        setProgress(`Uploading ${i + 1} of ${items.length}…`);
+        if (it.kind === 'photo') {
+          const data = await photoToBase64Jpeg(it.photo);
+          uploaded.push({ path: await uploadImportFile(household.id, data, 'image/jpeg', 'jpg'), name: `photo-${i + 1}.jpg`, media_type: 'image/jpeg' });
+        } else {
+          const ext = it.file.name.split('.').pop()?.toLowerCase() || 'bin';
+          uploaded.push({ path: await uploadImportFile(household.id, it.file.data, it.file.media_type, ext), name: it.file.name, media_type: it.file.media_type });
+        }
+      }
+      setProgress(null);
       setPreparing(false);
-      const draft = await parse.mutateAsync(files);
+      const draft = await parse.mutateAsync(uploaded);
       stashDraft(draft);
       router.replace({ pathname: '/recipes/edit', params: { draft: '1' } });
     } catch (e) {
+      setProgress(null);
       setPreparing(false);
       setError(describeError(e));
     }
@@ -117,8 +130,8 @@ export default function ImportFile() {
         ) : (
           <Text style={type.small}>That is the most items for one recipe.</Text>
         )}
-        <Text style={type.small}>Photos, PDF, Word, text, Markdown, or a saved web page. Up to 8 MB each.</Text>
-        <Button title={preparing ? 'Preparing…' : parse.isPending ? 'Reading your recipe…' : 'Read recipe'} onPress={onRead} loading={busy} disabled={items.length === 0} />
+        <Text style={type.small}>Photos, PDF, Word, text, Markdown, or a saved web page. Up to 10 items, 8 MB each.</Text>
+        <Button title={progress ?? (preparing ? 'Preparing…' : parse.isPending ? 'Reading your recipe…' : 'Read recipe')} onPress={onRead} loading={busy} disabled={items.length === 0} />
       </Screen>
     </>
   );

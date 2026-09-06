@@ -72,6 +72,16 @@ Functions: `parse-recipe-text` (pasted text), `parse-recipe-file` (photos, PDF, 
 
 `--no-verify-jwt` is intentional: each function verifies the session itself through the Auth server (see `supabase/functions/_shared/auth.ts`), which works with every JWT signing-key type.
 
+### Tests
+
+```bash
+npm test                 # unit + component tests, no services needed (jest-expo)
+supabase start && npm run test:integration && supabase stop   # the app's data functions against a local Supabase
+npm run test:db          # SQL-level smoke test of RPCs, RLS, and storage policies (local stack)
+```
+
+`tests/unit` covers pure logic (quantities, dates, item parsing, pantry ranking, error text). `tests/components` renders components with the React Native testing library. `tests/integration` signs in real users on the local stack and calls the same functions the screens use, so bugs that only appear with two members or real RLS show up before a deploy.
+
 ### Testing the database locally
 
 Docker must be running.

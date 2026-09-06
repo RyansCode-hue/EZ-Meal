@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { describeFunctionError } from '@/lib/functions';
 import { useAuth } from '@/auth/AuthProvider';
 import { useHousehold } from '@/household/useHousehold';
 import type { RecipeDetail, RecipeDraft, RecipeSummary, StoreSection } from './types';
@@ -144,7 +144,7 @@ export function useParseRecipeText() {
       const { data, error } = await supabase.functions.invoke<{ recipe: RecipeDraft }>('parse-recipe-text', {
         body: { text },
       });
-      if (error) throw await describeFunctionError(error);
+      if (error) throw await describeFunctionError(error, 'The recipe reader');
       if (!data?.recipe) throw new Error('The parser returned no recipe.');
       return data.recipe;
     },
@@ -152,14 +152,14 @@ export function useParseRecipeText() {
 }
 
 export type ImageForParse = { media_type: 'image/jpeg' | 'image/png' | 'image/webp'; data: string };
-export type FileForParse = { name?: string; media_type: string; data: string };
+export type UploadedFile = { path: string; name: string; media_type: string };
 
-/** Sends photos and documents to parse-recipe-file and returns a draft. */
+/** Asks parse-recipe-file to read files already uploaded to the household's bucket. */
 export function useParseRecipeFiles() {
   return useMutation({
-    mutationFn: async (files: FileForParse[]): Promise<RecipeDraft> => {
-      const { data, error } = await supabase.functions.invoke<{ recipe: RecipeDraft }>('parse-recipe-file', { body: { files } });
-      if (error) throw await describeFunctionError(error);
+    mutationFn: async (files: UploadedFile[]): Promise<RecipeDraft> => {
+      const { data, error } = await supabase.functions.invoke<{ recipe: RecipeDraft }>('parse-recipe-file', { body: { paths: files } });
+      if (error) throw await describeFunctionError(error, 'The recipe reader');
       if (!data?.recipe) throw new Error('The reader returned no recipe.');
       return data.recipe;
     },
@@ -171,7 +171,7 @@ export function useImportRecipeUrl() {
   return useMutation({
     mutationFn: async (url: string): Promise<RecipeDraft> => {
       const { data, error } = await supabase.functions.invoke<{ recipe: RecipeDraft }>('import-recipe-url', { body: { url } });
-      if (error) throw await describeFunctionError(error);
+      if (error) throw await describeFunctionError(error, 'The recipe reader');
       if (!data?.recipe) throw new Error('The importer returned no recipe.');
       return data.recipe;
     },
@@ -185,24 +185,10 @@ export function useNormalizeIngredients() {
       const { data, error } = await supabase.functions.invoke<{ ingredients: Array<{ canonical_name: string; store_section: StoreSection }> }>('normalize-ingredients', {
         body: { ingredients },
       });
-      if (error) throw await describeFunctionError(error);
+      if (error) throw await describeFunctionError(error, 'The recipe reader');
       if (!data?.ingredients || data.ingredients.length !== ingredients.length) throw new Error('The ingredient labeler returned an incomplete answer.');
       return data.ingredients;
     },
   });
 }
 
-// Edge Functions return { error: string } bodies on failure; surface that text
-// instead of the generic "non-2xx status code" message.
-async function describeFunctionError(error: unknown): Promise<Error> {
-  if (error instanceof FunctionsHttpError) {
-    try {
-      const body = (await error.context.json()) as { error?: string };
-      if (body?.error) return new Error(body.error);
-    } catch {
-      // Body was not JSON; fall through to the generic message.
-    }
-    return new Error(`Recipe parser failed (HTTP ${error.context.status}).`);
-  }
-  return error instanceof Error ? error : new Error(String(error));
-}
