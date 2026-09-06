@@ -1,0 +1,83 @@
+project_id = "ez-meal"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+# The [auth] section mirrors the hosted project and is applied with `supabase config push`.
+# Sign-ups are closed: the app is for one household, and an open sign-up would let a
+# stranger create a household and spend the Claude credits behind the Edge Functions.
+# New members are added from the Supabase dashboard (Authentication > Users > Invite).
+# Local tests create users through the admin API, which ignores these switches.
+[auth]
+enabled = true
+site_url = "https://ez-meal.expo.app"
+additional_redirect_urls = ["https://ez-meal.expo.app", "ezmeal://"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = false
+
+# [auth.email] enable_signup is the "email provider enabled" switch, not sign-up
+# permission. It must stay true or nobody can sign in. Sign-ups are closed by the
+# top-level [auth] enable_signup above.
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[edge_runtime]
+enabled = true
+
+# JWTs are verified inside each function via the Auth server (see
+# functions/_shared/auth.ts), which works with every signing-key type. The gateway
+# check is disabled so it cannot reject valid sessions signed with newer keys.
+[functions.parse-recipe-text]
+verify_jwt = false
+
+[functions.normalize-ingredients]
+verify_jwt = false
+
+[functions.parse-recipe-file]
+verify_jwt = false
+
+[functions.import-recipe-url]
+verify_jwt = false
+
+[functions.parse-pantry-image]
+verify_jwt = false
+
+[functions.suggest-meals]
+verify_jwt = false
+
+[functions.estimate-nutrition]
+verify_jwt = false
+
+[functions.notify-partner]
+verify_jwt = false
+
+[functions.redeem-invite]
+verify_jwt = false

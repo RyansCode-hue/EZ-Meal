@@ -1,0 +1,12 @@
+{
+  "name": "EZ Meal",
+  "short_name": "EZ Meal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F8F4",
+  "theme_color": "#1F6B4A",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

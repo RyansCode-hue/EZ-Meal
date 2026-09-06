@@ -1,0 +1,187 @@
+{
+  "pages": [
+    {
+      "id": "screens",
+      "name": "Screens"
+    },
+    {
+      "id": "directions",
+      "name": "Directions"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Plan",
+      "page": "screens"
+    },
+    {
+      "file": "Recipes.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Recipes",
+      "page": "screens"
+    },
+    {
+      "file": "AddRecipe.dc.html",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Add a recipe (phase 4 options)",
+      "page": "screens"
+    },
+    {
+      "file": "Recipe.dc.html",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Recipe",
+      "page": "screens"
+    },
+    {
+      "file": "RecipeEdit.dc.html",
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Edit recipe",
+      "page": "screens"
+    },
+    {
+      "file": "Groceries.dc.html",
+      "x": 0,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Groceries",
+      "page": "screens"
+    },
+    {
+      "file": "Pantry.dc.html",
+      "x": 470,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Pantry (phase 5)",
+      "page": "screens"
+    },
+    {
+      "file": "CookedSheet.dc.html",
+      "x": 940,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Mark cooked (phase 5)",
+      "page": "screens"
+    },
+    {
+      "file": "Ideas.dc.html",
+      "x": 1410,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Ideas (phase 6)",
+      "page": "screens"
+    },
+    {
+      "file": "Settings.dc.html",
+      "x": 1880,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Household (reminders: phase 7)",
+      "page": "screens"
+    },
+    {
+      "file": "SignIn.dc.html",
+      "x": 2350,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "Sign in",
+      "page": "screens"
+    },
+    {
+      "file": "Desktop.dc.html",
+      "x": 0,
+      "y": 1928,
+      "w": 1440,
+      "h": 900,
+      "title": "Website, wide window",
+      "page": "screens"
+    },
+    {
+      "file": "Styles.dc.html",
+      "x": 1520,
+      "y": 1928,
+      "w": 900,
+      "h": 720,
+      "title": "Styles",
+      "page": "screens"
+    },
+    {
+      "file": "DirectionA.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 974,
+      "title": "A \u00b7 Chalkboard (not chosen)",
+      "page": "directions"
+    },
+    {
+      "file": "DirectionC.dc.html",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 974,
+      "title": "C \u00b7 Diner (not chosen)",
+      "page": "directions"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "row1",
+      "x": 0,
+      "y": -150,
+      "w": 520,
+      "text": "Built today, restyled. Plan, Recipes, the add sheet (with the phase 4 photo and link options), a recipe page, and the edit form.",
+      "page": "screens"
+    },
+    {
+      "id": "row2",
+      "x": 0,
+      "y": 814,
+      "w": 520,
+      "text": "Groceries is built. Pantry, Mark cooked, Ideas, and the reminders block in Household are planned screens drawn ahead of their phases.",
+      "page": "screens"
+    },
+    {
+      "id": "row3",
+      "x": 0,
+      "y": 1778,
+      "w": 520,
+      "text": "The website on a laptop: same screens with the navigation as a left rail. Styles collects the tokens and controls for porting into the app.",
+      "page": "screens"
+    },
+    {
+      "id": "dirs",
+      "x": 0,
+      "y": -150,
+      "w": 420,
+      "text": "The two directions not chosen, kept for reference.",
+      "page": "directions"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "screens"
+  }
+}

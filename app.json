@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "EZ Meal",
+    "slug": "ez-meal",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "ezmeal",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F6F8F4",
+    "android": {
+      "package": "com.ezmeal.app",
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1F6B4A"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.ezmeal.app",
+      "supportsTablet": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "EZ Meal uses your photos for recipe pictures.",
+          "cameraPermission": "EZ Meal uses the camera to photograph recipes and dishes."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#1F6B4A",
+          "defaultChannel": "household"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "33fd89ad-2b3d-4ddc-87b1-e0127c40f437"
+      }
+    },
+    "owner": "1ryansapps1",
+    "icon": "./assets/icon.png",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
