@@ -11,7 +11,7 @@
     "lint": "expo lint",
     "build:android": "eas build --platform android --profile preview",
     "test:db": "node supabase/tests/smoke.mjs",
-    "deploy:web": "expo export --platform web --clear && eas deploy --prod",
+    "deploy:web": "node scripts/deploy-web.mjs",
     "test": "jest",
     "test:integration": "EZMEAL_LOCAL=1 jest -c jest.integration.config.js --runInBand"
   },

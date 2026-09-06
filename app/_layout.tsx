@@ -14,6 +14,7 @@ import { Notice } from '@/components/Notice';
 import { describeError } from '@/lib/errors';
 import { RealtimeSync } from '@/lib/RealtimeSync';
 import { ReminderSync } from '@/notifications/ReminderSync';
+import { WebUpdateCheck } from '@/lib/WebUpdateCheck';
 
 // Shown by Expo Router when a screen throws. The details are logged; the person
 // gets a plain explanation and a retry.
@@ -57,6 +58,7 @@ export default function RootLayout() {
       >
         <AuthProvider>
           <StatusBar style="dark" />
+          <WebUpdateCheck />
           <Gate />
         </AuthProvider>
       </PersistQueryClientProvider>
