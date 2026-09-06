@@ -80,6 +80,7 @@ Spec: docs/SPEC.md
 - [x] Wide-screen rail drawn by the app itself (the navigator's own highlight showed behind the green block); Household moved to the bottom of the rail, header icon hidden there; phones unchanged
 - [x] Invite code now creates the account: `redeem-invite` function (service role, validated, 10 failed tries per hour per address, rolls back on failure); sign-up screen asks for the code, name, email, password; public sign-up stays closed
 - [x] Invite sign-up failed live with "not found": the hosted project grants `service_role` no table privileges by default, so the lookup errored and was reported as a miss. Fixed with `20260909100000_service_role_grants.sql`; the function now reports lookup errors as errors. This also unblocks `notify-partner`, which reads under the same role.
+- [x] "Could not load your household. JSON object requested, multiple rows" once a second member joined: the membership lookup used maybeSingle() without filtering by user id, and RLS returns every member's row. Now filtered by the caller's id (also in the household settings update).
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 

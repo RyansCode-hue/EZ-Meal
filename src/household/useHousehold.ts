@@ -10,10 +10,13 @@ type HouseholdState = {
   members: HouseholdMember[];
 };
 
-async function fetchHousehold(): Promise<HouseholdState> {
+// Members can read every row of their household, so the caller's own row must
+// be picked by user id; a bare maybeSingle() breaks as soon as a partner joins.
+async function fetchHousehold(userId: string): Promise<HouseholdState> {
   const { data: membership, error: mErr } = await supabase
     .from('household_members')
     .select('household_id')
+    .eq('user_id', userId)
     .maybeSingle();
   if (mErr) throw mErr;
   if (!membership) return { household: null, members: [] };
@@ -36,7 +39,7 @@ export function useHousehold() {
   const userId = session?.user.id;
   const query = useQuery({
     queryKey: householdKey(userId),
-    queryFn: fetchHousehold,
+    queryFn: () => fetchHousehold(userId!),
     enabled: !!userId,
   });
   const me = query.data?.members.find((m) => m.user_id === userId) ?? null;
@@ -107,7 +110,10 @@ export function useUpdateHouseholdSettings() {
   const { session } = useAuth();
   return useMutation({
     mutationFn: async (patch: Partial<Pick<Household, 'planning_day' | 'planning_time' | 'dinner_reminder_time' | 'week_start_day' | 'name'>>) => {
-      const { error, data } = await supabase.from('households').update(patch).eq('id', (await supabase.from('household_members').select('household_id').single()).data?.household_id ?? '').select('id');
+      if (!session) throw new Error('Not signed in.');
+      const { data: me, error: meErr } = await supabase.from('household_members').select('household_id').eq('user_id', session.user.id).single();
+      if (meErr) throw meErr;
+      const { error, data } = await supabase.from('households').update(patch).eq('id', me.household_id).select('id');
       if (error) throw error;
       if (!data?.length) throw new Error('Household not found.');
     },
