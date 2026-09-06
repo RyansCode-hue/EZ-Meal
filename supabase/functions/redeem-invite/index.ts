@@ -12,7 +12,7 @@ const MAX_ATTEMPTS_PER_HOUR = 10;
 const Input = z.object({
   invite_code: z.string().trim().min(6).max(12),
   email: z.string().trim().email().max(200),
-  password: z.string().min(8).max(200),
+  password: z.string().max(200),
   display_name: z.string().trim().min(1).max(40),
 });
 
@@ -47,10 +47,23 @@ Deno.serve(async (req) => {
     return json({ error: 'Check the fields: a valid email, a password of at least 8 characters, your name, and the invite code.' }, 400);
   }
 
-  const { data: household } = await admin.from('households').select('id, name').eq('invite_code', input.invite_code.toUpperCase()).maybeSingle();
+  // Strip anything that is not a code character: pasted text sometimes carries
+  // spaces, dashes, or invisible characters.
+  const code = input.invite_code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const { data: household, error: hErr } = await admin.from('households').select('id, name').eq('invite_code', code).maybeSingle();
+  if (hErr) {
+    console.error(JSON.stringify({ fn: FN, requestId, error: `household lookup: ${hErr.message}` }));
+    return json({ error: `Could not check the invite code (${hErr.message}). Try again.` }, 500);
+  }
   if (!household) {
     await recordAttempt(false);
+    console.warn(JSON.stringify({ fn: FN, requestId, warn: 'code not found', length: code.length, head: code.slice(0, 2) }));
     return json({ error: 'That invite code was not found. Check it with the person who sent it.' }, 404);
+  }
+  // The code is checked first so the message points at the right field.
+  if (input.password.length < 8) {
+    await recordAttempt(false);
+    return json({ error: 'Use a password of at least 8 characters.' }, 400);
   }
 
   const { data: created, error: cErr } = await admin.auth.admin.createUser({

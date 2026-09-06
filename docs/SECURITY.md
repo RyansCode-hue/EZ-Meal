@@ -13,7 +13,7 @@ _Last reviewed: 2026-09-04, end of phase 7._
 ## What each person can see
 
 - **Row Level Security on every table.** Policies compare `household_id` to `current_household_id()`, a `security definer` helper that reads the caller's membership. Members read and write only their household's rows; `household_members` rows can be edited only by their own user.
-- **Privileges are explicit.** `authenticated` has table grants; `anon` has none on tables or functions (`20260904000000_grants.sql`). An unauthenticated request cannot read a table even if a policy were wrong.
+- **Privileges are explicit.** `authenticated` has table grants; `anon` has none on tables or functions (`20260904000000_grants.sql`); `service_role` is granted explicitly for the two functions that run under it (`20260909100000_service_role_grants.sql`). An unauthenticated request cannot read a table even if a policy were wrong.
 - **Storage** bucket `recipe-photos` is private. Objects live under `<household_id>/…` and policies allow access only to that folder. The app reads through short-lived signed URLs.
 - `app_settings` (the trigger's callback URL) has RLS with no policies: only the database owner reads it.
 - `notification_log` is readable by household members, never writable from the app.
