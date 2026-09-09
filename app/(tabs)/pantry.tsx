@@ -3,13 +3,14 @@ import { Pressable, SectionList, StyleSheet, Text, TextInput, View } from 'react
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useDeletePantryItem, useParsePantryImages, usePantry, useUpsertPantryItems, type ParsedPantryItem } from '@/pantry/hooks';
 import { StatusControl } from '@/pantry/StatusControl';
-import type { PantryItem, PantryStatus } from '@/pantry/types';
+import { AmountFields } from '@/pantry/AmountFields';
+import { formatAmount, readAmount } from '@/pantry/amount';
+import type { PantryItem, PantryStatus, PantryUpsert } from '@/pantry/types';
 import { SECTION_ORDER } from '@/groceries/types';
 import { parseItemText } from '@/groceries/parseItem';
 import { useNormalizeIngredients } from '@/recipes/hooks';
 import { cameraAvailable, photoToBase64Jpeg, pickPhotos } from '@/recipes/photos';
 import { STORE_SECTION_LABELS, type StoreSection } from '@/recipes/types';
-import { formatQuantity } from '@/recipes/quantity';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { EmptyState } from '@/components/EmptyState';
@@ -20,6 +21,7 @@ import { confirm } from '@/lib/confirm';
 import { colors, fonts, maxContentWidth, radius, space, tapTarget, type } from '@/theme/tokens';
 
 type Section = { title: string; data: PantryItem[] };
+type Amount = { quantity: number | null; unit: string | null };
 
 export default function PantryTab() {
   const pantry = usePantry();
@@ -29,6 +31,7 @@ export default function PantryTab() {
   const parseImages = useParsePantryImages();
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<PantryItem | null>(null);
   const [review, setReview] = useState<ParsedPantryItem[] | null>(null);
   const [reading, setReading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,8 @@ export default function PantryTab() {
   }
 
   // Hand-added items are labeled with a store section through the ingredient labeler.
-  async function addByHand(text: string, status: PantryStatus) {
+  // An amount typed into the fields wins over one typed in front of the name.
+  async function addByHand(text: string, status: PantryStatus, amount: Amount) {
     setError(null);
     setNotice(null);
     const parsed = parseItemText(text);
@@ -70,10 +74,17 @@ export default function PantryTab() {
     } catch (e) {
       setNotice(`Added under "Other" because sorting failed: ${describeError(e)}`);
     }
-    upsert.mutate([{ canonical_name: canonical, display_name: parsed.name, status, quantity: parsed.quantity, unit: parsed.unit, store_section: section }], {
+    const quantity = amount.quantity ?? parsed.quantity;
+    const unit = amount.unit ?? parsed.unit;
+    upsert.mutate([{ canonical_name: canonical, display_name: parsed.name, status, quantity, unit, store_section: section }], {
       onSuccess: () => setAddOpen(false),
       onError: fail,
     });
+  }
+
+  function saveEdit(patch: PantryUpsert) {
+    setError(null);
+    upsert.mutate([patch], { onSuccess: () => setEditing(null), onError: fail });
   }
 
   async function fromPhoto(source: 'camera' | 'library') {
@@ -120,18 +131,27 @@ export default function PantryTab() {
         keyExtractor={(i) => i.id}
         ListHeaderComponent={header}
         renderSectionHeader={({ section }) => <Text style={styles.sectionTitle}>{section.title}</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.display_name}</Text>
-              {item.quantity != null || item.unit ? <Text style={type.small}>{[formatQuantity(item.quantity), item.unit].filter(Boolean).join(' ')}</Text> : null}
+        renderItem={({ item }) => {
+          const amount = formatAmount(item.quantity, item.unit);
+          return (
+            <View style={styles.row}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${item.display_name}`}
+                accessibilityHint="Change the amount, name, or status"
+                onPress={() => setEditing(item)}
+                style={({ pressed }) => [styles.rowBody, pressed && { opacity: 0.7 }]}
+              >
+                <Text style={styles.name}>{item.display_name}</Text>
+                <Text style={[type.small, !amount && styles.amountHint]}>{amount || 'Add amount'}</Text>
+              </Pressable>
+              <StatusControl value={item.status} onChange={(s) => setStatus(item, s)} label={item.display_name} />
+              <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.display_name}`} onPress={() => onDelete(item)} hitSlop={6} style={styles.deleteBtn}>
+                <Ionicons name="close" size={18} color={colors.muted} />
+              </Pressable>
             </View>
-            <StatusControl value={item.status} onChange={(s) => setStatus(item, s)} label={item.display_name} />
-            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.display_name}`} onPress={() => onDelete(item)} hitSlop={6} style={styles.deleteBtn}>
-              <Ionicons name="close" size={18} color={colors.muted} />
-            </Pressable>
-          </View>
-        )}
+          );
+        }}
         ListEmptyComponent={
           pantry.isPending ? null : (
             <EmptyState icon="file-tray-stacked-outline" title={search ? 'No matches' : 'Nothing tracked yet'} body={search ? 'Try another word.' : 'Add staples by hand or read a receipt. Items marked Plenty stay off the grocery list.'} />
@@ -146,37 +166,77 @@ export default function PantryTab() {
 
       <AddSheet visible={addOpen} onClose={() => setAddOpen(false)} busy={upsert.isPending || normalize.isPending} onAdd={addByHand} />
 
+      {editing ? <EditSheet key={editing.id} item={editing} onClose={() => setEditing(null)} busy={upsert.isPending} onSave={saveEdit} /> : null}
+
       <ReviewSheet
         items={review}
         onClose={() => setReview(null)}
         busy={upsert.isPending}
         onAdd={(chosen) => {
-          upsert.mutate(
-            chosen.map((c) => ({ canonical_name: c.canonical_name, display_name: c.display_name, status: 'plenty' as const, quantity: c.quantity, unit: c.unit, store_section: c.store_section })),
-            { onSuccess: () => setReview(null), onError: fail },
-          );
+          upsert.mutate(chosen.map(upsertFromParsed), { onSuccess: () => setReview(null), onError: fail });
         }}
       />
     </View>
   );
 }
 
-function AddSheet({ visible, onClose, onAdd, busy }: { visible: boolean; onClose: () => void; onAdd: (text: string, status: PantryStatus) => void; busy: boolean }) {
+// A photo read that found no amount leaves any amount already on the item alone.
+function upsertFromParsed(c: ParsedPantryItem): PantryUpsert {
+  return {
+    canonical_name: c.canonical_name,
+    display_name: c.display_name,
+    status: 'plenty',
+    store_section: c.store_section,
+    ...(c.quantity != null ? { quantity: c.quantity } : {}),
+    ...(c.unit ? { unit: c.unit } : {}),
+  };
+}
+
+function AddSheet({ visible, onClose, onAdd, busy }: { visible: boolean; onClose: () => void; onAdd: (text: string, status: PantryStatus, amount: Amount) => void; busy: boolean }) {
   const [text, setText] = useState('');
+  const [amount, setAmount] = useState('');
+  const [unit, setUnit] = useState('');
   const [status, setStatus] = useState<PantryStatus>('plenty');
+  const read = readAmount(amount, unit);
+  const canAdd = !!text.trim() && read.ok;
+
+  function submit() {
+    if (!read.ok || !text.trim()) return;
+    onAdd(text, status, read);
+    setText('');
+    setAmount('');
+    setUnit('');
+  }
+
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Add to the pantry">
-      <TextField label="Item" value={text} onChangeText={setText} placeholder="5 lb rice" autoFocus hint="A leading amount is picked up. The store section is filled in for you." returnKeyType="done" onSubmitEditing={() => onAdd(text, status)} />
+      <TextField label="Item" value={text} onChangeText={setText} placeholder="Rice" autoFocus hint="The store section is filled in for you." returnKeyType="done" onSubmitEditing={submit} />
+      <AmountFields amount={amount} unit={unit} onAmountChange={setAmount} onUnitChange={setUnit} error={read.ok ? null : read.error} />
       <StatusControl value={status} onChange={setStatus} label="Status" />
-      <Button
-        title="Add"
-        loading={busy}
-        disabled={!text.trim()}
-        onPress={() => {
-          onAdd(text, status);
-          setText('');
-        }}
-      />
+      <Button title="Add" loading={busy} disabled={!canAdd} onPress={submit} />
+    </BottomSheet>
+  );
+}
+
+function EditSheet({ item, onClose, onSave, busy }: { item: PantryItem; onClose: () => void; onSave: (patch: PantryUpsert) => void; busy: boolean }) {
+  const [name, setName] = useState(item.display_name);
+  const [amount, setAmount] = useState(item.quantity == null ? '' : formatAmount(item.quantity, null));
+  const [unit, setUnit] = useState(item.unit ?? '');
+  const [status, setStatus] = useState<PantryStatus>(item.status);
+  const read = readAmount(amount, unit);
+
+  function submit() {
+    if (!read.ok) return;
+    // Quantity and unit are always sent so a cleared field clears the stored amount.
+    onSave({ canonical_name: item.canonical_name, display_name: name.trim() || item.display_name, status, quantity: read.quantity, unit: read.unit });
+  }
+
+  return (
+    <BottomSheet visible onClose={onClose} title="Edit item">
+      <TextField label="Item" value={name} onChangeText={setName} returnKeyType="done" onSubmitEditing={submit} />
+      <AmountFields amount={amount} unit={unit} onAmountChange={setAmount} onUnitChange={setUnit} error={read.ok ? null : read.error} />
+      <StatusControl value={status} onChange={setStatus} label="Status" />
+      <Button title="Save" loading={busy} disabled={!read.ok} onPress={submit} />
     </BottomSheet>
   );
 }
@@ -211,7 +271,7 @@ function ReviewSheet({ items, onClose, onAdd, busy }: { items: ParsedPantryItem[
                 <Ionicons name={on ? 'checkbox' : 'square-outline'} size={24} color={on ? colors.accent : colors.ruleStrong} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.name}>{item.display_name}</Text>
-                  <Text style={type.small}>{[[formatQuantity(item.quantity), item.unit].filter(Boolean).join(' '), STORE_SECTION_LABELS[item.store_section]].filter(Boolean).join(' · ')}</Text>
+                  <Text style={type.small}>{[formatAmount(item.quantity, item.unit), STORE_SECTION_LABELS[item.store_section]].filter(Boolean).join(' · ')}</Text>
                 </View>
               </Pressable>
             );
@@ -232,7 +292,9 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: space.sm },
   sectionTitle: { ...type.label, marginTop: space.lg, marginBottom: space.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 8, paddingLeft: space.md, paddingRight: 2, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.rule, marginBottom: space.xs },
+  rowBody: { flex: 1, minHeight: tapTarget, justifyContent: 'center' },
   name: { fontFamily: fonts.bodySemibold, fontSize: 16, color: colors.ink },
+  amountHint: { color: colors.muted, opacity: 0.7 },
   deleteBtn: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
   reviewRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.rule },
 });

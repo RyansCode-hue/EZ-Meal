@@ -84,10 +84,16 @@ Spec: docs/SPEC.md
 - [x] Recipe import: files upload to the private bucket one at a time and the reader fetches them (no request-size ceiling); limit raised to 10; clearer messages for size and timeout failures
 - [x] Test suite: jest-expo with unit, component, and local-Supabase integration tests (`npm test`, `npm run test:integration`); the two-member household bug has a regression test
 - [x] Android builds paused until website bugs are worked out (user request)
+- [x] Pantry amounts: Amount and Unit fields with unit chips on add, tap an item to edit its name, amount, and status; `upsert_pantry_items` clears an amount when null is sent; grocery Low note reads "You have 2 lb"
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 
 ## Review notes
+
+### Pantry amounts (2026-09-08)
+- Unit vocabulary lives in `src/groceries/units.ts` and mirrors `normalize_unit()` in SQL; `parseItemText` and the amount editor both use it, so "lbs" and "pounds" land on "lb".
+- The upsert RPC now distinguishes an omitted key (keep) from a null key (clear). Callers that only know some fields omit the rest: the receipt review sheet omits quantity and unit when the reader found none; the edit sheet always sends both.
+- Verified: `tsc` clean; jest 36 tests (new: units, amount, AmountFields); DB smoke test passes including amount change, clear, and the "You have 2.5 tbsp" grocery note; local browser check of the add and edit sheets.
 
 ### Phase 8 (2026-09-04, in progress)
 - Verified: `tsc` clean; web deployed. Offline queueing for pantry uses the same persisted-mutation pattern as groceries (mutation defaults registered in `src/lib/query.ts`).

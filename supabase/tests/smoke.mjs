@@ -243,11 +243,14 @@ let savedId = null;
   await ryan.rpc('set_plan_entry_cooked', { p_id: e1.id, p_cooked: false });
   await ryan.from('pantry_items').insert([
     { household_id: hh.id, canonical_name: 'ground beef', display_name: 'Ground beef', status: 'plenty' },
-    { household_id: hh.id, canonical_name: 'olive oil', display_name: 'Olive oil', status: 'low' },
+    { household_id: hh.id, canonical_name: 'olive oil', display_name: 'Olive oil', status: 'low', quantity: 2.5, unit: 'tbsp' },
   ]);
   const { data: g4 } = await ryan.rpc('generate_grocery_list', { p_start: '2026-09-09', p_end: '2026-09-13' });
   const m4 = byName(g4 ?? []);
-  check('pantry plenty skips item, pantry low adds note', !m4['ground beef|lb'] && m4['olive oil|tbsp']?.note === 'You have some', JSON.stringify(g4?.map((r) => [r.name, r.note])));
+  check('pantry plenty skips item, pantry low notes the amount on hand', !m4['ground beef|lb'] && m4['olive oil|tbsp']?.note === 'You have 2.5 tbsp', JSON.stringify(g4?.map((r) => [r.name, r.note])));
+  await ryan.from('pantry_items').update({ quantity: null, unit: null }).eq('household_id', hh.id).eq('canonical_name', 'olive oil');
+  const { data: g4b } = await ryan.rpc('generate_grocery_list', { p_start: '2026-09-09', p_end: '2026-09-13' });
+  check('pantry low without an amount says "some"', byName(g4b ?? [])['olive oil|tbsp']?.note === 'You have some', JSON.stringify(g4b?.map((r) => [r.name, r.note])));
 
   const { data: cleared, error: cErr } = await partner.rpc('clear_checked_groceries');
   const { data: g5 } = await ryan.from('grocery_items').select('canonical_name, checked');
@@ -267,6 +270,10 @@ let savedId = null;
   check('upsert_pantry_items inserts, updates, skips blanks', !error && up.length === 2 && rows.find((r) => r.canonical_name === 'garlic')?.store_section === 'produce' && rows.find((r) => r.canonical_name === 'olive oil')?.status === 'plenty' && rows.find((r) => r.canonical_name === 'olive oil')?.display_name === 'Olive oil', error?.message ?? JSON.stringify(rows));
   const { data: up2 } = await ryan.rpc('upsert_pantry_items', { p_items: [{ canonical_name: 'garlic', status: 'out' }] });
   check('upsert keeps section and quantity when omitted', up2?.[0]?.store_section === 'produce' && Number(up2?.[0]?.quantity) === 1 && up2?.[0]?.status === 'out', JSON.stringify(up2));
+  const { data: up3 } = await ryan.rpc('upsert_pantry_items', { p_items: [{ canonical_name: 'garlic', quantity: 3, unit: 'lb' }] });
+  check('upsert changes the amount and keeps the rest', Number(up3?.[0]?.quantity) === 3 && up3?.[0]?.unit === 'lb' && up3?.[0]?.status === 'out' && up3?.[0]?.store_section === 'produce', JSON.stringify(up3));
+  const { data: up4 } = await ryan.rpc('upsert_pantry_items', { p_items: [{ canonical_name: 'garlic', quantity: null, unit: '' }] });
+  check('upsert clears the amount when null or blank is sent', up4?.[0]?.quantity === null && up4?.[0]?.unit === null && up4?.[0]?.status === 'out', JSON.stringify(up4));
   const { error: sErr } = await stranger.rpc('upsert_pantry_items', { p_items: [{ canonical_name: 'x' }] });
   check('stranger cannot upsert pantry', sErr?.code === '42501', sErr?.message);
 }

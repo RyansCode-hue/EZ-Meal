@@ -27,14 +27,22 @@ export function useUpsertPantryItems() {
     networkMode: 'offlineFirst',
     retry: 3,
     mutationFn: async (items: PantryUpsert[]): Promise<PantryItem[]> => (await upsertPantryFn(items)) as PantryItem[],
-    // Status taps should feel instant; the list refetches after the write lands.
+    // Status taps and amount edits should feel instant; the list refetches after the write lands.
+    // Only keys present in the payload change, matching the RPC's semantics.
     onMutate: async (items) => {
       await qc.cancelQueries({ queryKey: pantryKey });
       const previous = qc.getQueryData<PantryItem[]>(pantryKey);
       qc.setQueryData<PantryItem[]>(pantryKey, (rows) =>
         rows?.map((r) => {
           const patch = items.find((i) => i.canonical_name === r.canonical_name);
-          return patch?.status ? { ...r, status: patch.status } : r;
+          if (!patch) return r;
+          return {
+            ...r,
+            ...(patch.status ? { status: patch.status } : {}),
+            ...(patch.display_name ? { display_name: patch.display_name } : {}),
+            ...('quantity' in patch ? { quantity: patch.quantity ?? null } : {}),
+            ...('unit' in patch ? { unit: patch.unit ?? null } : {}),
+          };
         }),
       );
       return { previous };
