@@ -3,7 +3,9 @@ import { Platform } from 'react-native';
 
 // Web only. Phones keep a copy of the site's entry page for a while, so a fix
 // can take a day to show up. This asks the server which build is current
-// (never from cache) and reloads once when it differs from the running one.
+// and reloads once when it differs from the running one. The timestamp query
+// defeats the hosting CDN, which caches version.json for an hour; no-store
+// only covers the browser's own cache.
 const RUNNING = process.env.EXPO_PUBLIC_BUILD_ID;
 const CHECK_EVERY_MS = 5 * 60 * 1000;
 
@@ -13,7 +15,7 @@ export function WebUpdateCheck() {
     let reloaded = false;
     const check = async () => {
       try {
-        const res = await fetch('/version.json', { cache: 'no-store' });
+        const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) return;
         const { id } = (await res.json()) as { id?: string };
         if (id && id !== RUNNING && !reloaded) {
