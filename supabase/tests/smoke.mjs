@@ -278,6 +278,36 @@ let savedId = null;
   check('stranger cannot upsert pantry', sErr?.code === '42501', sErr?.message);
 }
 
+// Cooking subtracts tracked amounts; un-cooking restores them; nothing is removed
+{
+  const { data: rid } = await ryan.rpc('save_recipe', { p_recipe: { title: 'Deduct test', servings: 2 }, p_ingredients: [
+    { quantity: 1, unit: 'lb', name: 'chicken', canonical_name: 'chicken', store_section: 'meat_seafood' },
+    { quantity: 3, unit: 'tablespoons', name: 'butter', canonical_name: 'butter', store_section: 'dairy_eggs' },
+    { quantity: 1, unit: null, name: 'lemon', canonical_name: 'lemon', store_section: 'produce' },
+    { quantity: 1, unit: 'tsp', name: 'pepper', canonical_name: 'pepper', store_section: 'spices' },
+  ], p_steps: [{ text: 'Cook.' }] });
+  await ryan.rpc('upsert_pantry_items', { p_items: [
+    { canonical_name: 'chicken', quantity: 5, unit: 'lbs', status: 'plenty' },
+    { canonical_name: 'butter', quantity: 4, unit: 'tbsp', status: 'plenty' },
+    { canonical_name: 'lemon', quantity: 3, status: 'plenty' },
+    { canonical_name: 'pepper', quantity: 2, unit: 'oz', status: 'plenty' },   // unit mismatch: untouched
+  ] });
+  const { data: ce } = await ryan.rpc('add_plan_entry', { p_date: '2026-09-12', p_kind: 'recipe', p_recipe_id: rid, p_servings: 4 }); // factor 2
+  const read = async () => Object.fromEntries((await ryan.from('pantry_items').select('canonical_name, quantity, unit, status').in('canonical_name', ['chicken', 'butter', 'lemon', 'pepper'])).data.map((r) => [r.canonical_name, r]));
+  const { error: cookErr } = await ryan.rpc('set_plan_entry_cooked', { p_id: ce.id, p_cooked: true });
+  const c1 = await read();
+  check('cooking subtracts scaled amounts in matching units', !cookErr && Number(c1.chicken.quantity) === 3 && Number(c1.lemon.quantity) === 1 && Number(c1.pepper.quantity) === 2, cookErr?.message ?? JSON.stringify(c1));
+  check('an amount that hits zero stays as Out', Number(c1.butter.quantity) === 0 && c1.butter.status === 'out' && c1.chicken.status === 'plenty', JSON.stringify(c1));
+  await ryan.rpc('set_plan_entry_cooked', { p_id: ce.id, p_cooked: true });
+  const c2 = await read();
+  check('marking cooked twice does not subtract twice', Number(c2.chicken.quantity) === 3, JSON.stringify(c2));
+  await ryan.rpc('set_plan_entry_cooked', { p_id: ce.id, p_cooked: false });
+  const c3 = await read();
+  check('un-cooking restores exactly what was taken', Number(c3.chicken.quantity) === 5 && Number(c3.butter.quantity) === 4 && c3.butter.status === 'low' && Number(c3.lemon.quantity) === 3, JSON.stringify(c3));
+  const { data: leftover } = await ryan.from('cook_deductions').select('*').eq('plan_entry_id', ce.id);
+  check('deduction records are cleared on un-cook', leftover?.length === 0, JSON.stringify(leftover));
+}
+
 // Reminders: actor stamping, member preferences, settings table locked down
 {
   const { data: e } = await ryan.rpc('add_plan_entry', { p_date: '2026-10-01', p_kind: 'skip' });

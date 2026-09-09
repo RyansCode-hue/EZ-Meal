@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tansta
 import { supabase } from '@/lib/supabase';
 import type { ISODate } from '@/lib/dates';
 import { recipeKey, recipesKey } from '@/recipes/hooks';
+import { pantryKey } from '@/pantry/hooks';
+import { groceriesKey } from '@/groceries/hooks';
 import type { PlanEntry, PlanEntryKind } from './types';
 
 export const planKey = (start: ISODate, end: ISODate) => ['plan', start, end] as const;
@@ -90,9 +92,12 @@ export function useSetCooked() {
       const { error } = await supabase.rpc('set_plan_entry_cooked', { p_id: id, p_cooked: cooked });
       if (error) throw error;
     },
+    // Cooking moves pantry amounts, which changes what the grocery list needs.
     onSuccess: (_d, { recipeId }) => {
       invalidatePlan(qc);
       qc.invalidateQueries({ queryKey: recipesKey });
+      qc.invalidateQueries({ queryKey: pantryKey });
+      qc.invalidateQueries({ queryKey: groceriesKey });
       if (recipeId) qc.invalidateQueries({ queryKey: recipeKey(recipeId) });
     },
   });

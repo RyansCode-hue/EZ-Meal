@@ -4,6 +4,8 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Notice } from '@/components/Notice';
 import { usePantry, useUpsertPantryItems } from '@/pantry/hooks';
+import { formatAmount } from '@/pantry/amount';
+import { plannedDeduction, servingsFactor } from './deduction';
 import { StatusControl } from '@/pantry/StatusControl';
 import type { PantryStatus, PantryUpsert } from '@/pantry/types';
 import { useRecipe } from '@/recipes/hooks';
@@ -25,6 +27,7 @@ export function CookedSheet({ entry, onClose, onDone }: { entry: PlanEntry | nul
 
   const byCanonical = useMemo(() => new Map((pantry.data ?? []).map((p) => [p.canonical_name, p])), [pantry.data]);
   const ingredients = recipe.data?.recipe_ingredients ?? [];
+  const factor = servingsFactor(entry?.servings ?? null, recipe.data?.servings ?? null);
 
   useEffect(() => {
     // Seed from the pantry each time the sheet opens for a new entry.
@@ -61,17 +64,18 @@ export function CookedSheet({ entry, onClose, onDone }: { entry: PlanEntry | nul
   return (
     <BottomSheet visible onClose={onClose} title="Mark cooked">
       <Text style={type.heading}>{entry.recipe?.title ?? 'Recipe'}</Text>
-      <Text style={type.small}>Update the pantry so the next grocery list is right. Untracked items are left alone unless you pick a status.</Text>
+      <Text style={type.small}>Tracked amounts are subtracted when you mark this cooked. Set a status here to correct anything. Untracked items are left alone unless you pick a status.</Text>
       {error ? <Notice kind="error">{error}</Notice> : null}
       <ScrollView style={{ maxHeight: 340 }}>
         {recipe.isPending ? <Text style={type.bodyMuted}>Loading ingredients…</Text> : null}
         {ingredients.map((ing) => {
-          const tracked = byCanonical.has(ing.canonical_name);
+          const item = byCanonical.get(ing.canonical_name);
+          const ded = plannedDeduction(ing, item, factor);
           return (
             <View key={ing.id} style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{byCanonical.get(ing.canonical_name)?.display_name ?? ing.name}</Text>
-                {!tracked ? <Text style={type.small}>Not tracked</Text> : null}
+                <Text style={styles.name}>{item?.display_name ?? ing.name}</Text>
+                {!item ? <Text style={type.small}>Not tracked</Text> : ded ? <Text style={type.small}>{`Uses ${formatAmount(ded.take, item.unit)}, leaves ${formatAmount(ded.left, item.unit)}`}</Text> : item.quantity != null ? <Text style={type.small}>{`Has ${formatAmount(item.quantity, item.unit)}`}</Text> : null}
               </View>
               <StatusControl value={choices[ing.canonical_name] ?? null} onChange={(s) => setChoices((c) => ({ ...c, [ing.canonical_name]: s }))} label={ing.name} />
             </View>

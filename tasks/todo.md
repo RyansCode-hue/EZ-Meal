@@ -85,10 +85,16 @@ Spec: docs/SPEC.md
 - [x] Test suite: jest-expo with unit, component, and local-Supabase integration tests (`npm test`, `npm run test:integration`); the two-member household bug has a regression test
 - [x] Android builds paused until website bugs are worked out (user request)
 - [x] Pantry amounts: Amount and Unit fields with unit chips on add, tap an item to edit its name, amount, and status; `upsert_pantry_items` clears an amount when null is sent; grocery Low note reads "You have 2 lb"
+- [x] Marking a recipe cooked subtracts its scaled ingredient amounts from pantry items tracked in the same unit; zero stays as Out (items are never removed); un-cooking restores exactly what was taken (`cook_deductions`)
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 
 ## Review notes
+
+### Cook deducts (2026-09-08)
+- Subtraction lives in `set_plan_entry_cooked` so "Just mark cooked" and the Mark cooked sheet behave the same; the sheet previews "Uses 2 lb, leaves 3 lb" with the same rule (`src/plan/deduction.ts`).
+- Only ingredients with an amount whose normalized unit matches the pantry unit are touched; the rest are left alone and the status chips remain the manual correction.
+- Verified: `tsc` clean; jest 40 tests; smoke test covers scaling, unit mismatch, floor at zero as Out, idempotent double cook, and restore on un-cook.
 
 ### Pantry amounts (2026-09-08)
 - Unit vocabulary lives in `src/groceries/units.ts` and mirrors `normalize_unit()` in SQL; `parseItemText` and the amount editor both use it, so "lbs" and "pounds" land on "lb".
