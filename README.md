@@ -57,6 +57,8 @@ Claude is called only from `supabase/functions/*`. The key lives in Supabase sec
 ```bash
 supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 supabase secrets set CLAUDE_MODEL=claude-sonnet-5
+# Only for an organization-level key (not scoped to a workspace):
+supabase secrets set ANTHROPIC_WORKSPACE_ID=wrkspc_...
 supabase functions deploy parse-recipe-text --no-verify-jwt
 supabase functions deploy normalize-ingredients --no-verify-jwt
 supabase functions deploy parse-recipe-file --no-verify-jwt

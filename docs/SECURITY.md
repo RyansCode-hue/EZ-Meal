@@ -21,7 +21,7 @@ _Last reviewed: 2026-09-04, end of phase 7._
 ## Server-side functions
 
 - All Edge Functions verify the caller through the Auth server (`_shared/auth.ts`) and require household membership, then act as the caller so RLS still applies. Gateway JWT verification is off because it cannot verify every key type; the in-function check is the control.
-- **Claude key** lives only in Supabase function secrets (`ANTHROPIC_API_KEY`). `CLAUDE_MODEL` picks the model. Nothing AI-related ships in the app bundle.
+- **Claude key** lives only in Supabase function secrets (`ANTHROPIC_API_KEY`). `CLAUDE_MODEL` picks the model. `ANTHROPIC_WORKSPACE_ID` is needed only when the key is organization-level rather than workspace-scoped. Nothing AI-related ships in the app bundle.
 - Input limits: text ≤ 20k chars, ≤ 4 recipe photos, ≤ 3 pantry photos, ≤ 8 chat turns of ≤ 2k chars, image types restricted to JPEG/PNG/WebP.
 - **URL import** refuses non-http(s) schemes, loopback, link-local and private ranges, and IPv6 literals; follows redirects with a 15 s timeout; caps HTML at 3 MB; only copies an image if it is image/jpeg|png|webp and ≤ 8 MB.
 - **notify-partner** is called by a database trigger, not the app. It has no caller auth by design; it re-reads the entry under the service role, refuses unknown entries, only pushes to other members who opted in, throttles to one message per household per 2 minutes, and never includes anything but the actor's display name, the meal title, and the day.

@@ -11,7 +11,10 @@ export function anthropicClient(): Anthropic {
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY is not set for this function. Run: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...');
   }
-  return new Anthropic({ apiKey });
+  // Organization-level keys carry no workspace, so the API needs one named per
+  // request. Workspace-scoped keys work without it.
+  const workspaceId = Deno.env.get('ANTHROPIC_WORKSPACE_ID')?.trim();
+  return new Anthropic({ apiKey, defaultHeaders: workspaceId ? { 'anthropic-workspace-id': workspaceId } : undefined });
 }
 
 // Maps SDK errors to something the app can show. Returns [status, message].
