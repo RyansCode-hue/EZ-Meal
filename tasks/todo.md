@@ -86,10 +86,16 @@ Spec: docs/SPEC.md
 - [x] Android builds paused until website bugs are worked out (user request)
 - [x] Pantry amounts: Amount and Unit fields with unit chips on add, tap an item to edit its name, amount, and status; `upsert_pantry_items` clears an amount when null is sent; grocery Low note reads "You have 2 lb"
 - [x] Marking a recipe cooked subtracts its scaled ingredient amounts from pantry items tracked in the same unit; zero stays as Out (items are never removed); un-cooking restores exactly what was taken (`cook_deductions`)
+- [x] Container size: counted pantry items (box, can, bottle, no unit) record how much each holds; cooking converts recipe units into the item's unit (lb/oz, cup/gallon) or into containers via that size
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 
 ## Review notes
+
+### Container size and unit conversion (2026-10-19)
+- `pantry_items.package_quantity/package_unit`; `unit_measure()` and `convert_quantity()` in SQL mirror `MEASURES` and `convertQuantity` in `src/groceries/units.ts`. "oz" is weight; "fl oz" folds into it (existing normalize rule).
+- Deduction order: convert into the item's unit, else into containers via size, else skip. Recorded deductions still make un-cook exact.
+- Verified: `tsc` clean; jest 53 tests; smoke test covers box-by-size, lb->oz, cups->gallon, weight-vs-volume skip, restore, clear, positive-size check; local browser check of the add sheet at phone width.
 
 ### Cook deducts (2026-09-08)
 - Subtraction lives in `set_plan_entry_cooked` so "Just mark cooked" and the Mark cooked sheet behave the same; the sheet previews "Uses 2 lb, leaves 3 lb" with the same rule (`src/plan/deduction.ts`).

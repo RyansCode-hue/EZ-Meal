@@ -9,6 +9,8 @@ export type PantryItem = {
   status: PantryStatus;
   quantity: number | null;
   unit: string | null;
+  package_quantity: number | null;
+  package_unit: string | null;
   store_section: StoreSection;
   updated_at: string;
 };
@@ -19,6 +21,8 @@ export type PantryUpsert = {
   status?: PantryStatus;
   quantity?: number | null;
   unit?: string | null;
+  package_quantity?: number | null;
+  package_unit?: string | null;
   store_section?: StoreSection;
 };
 

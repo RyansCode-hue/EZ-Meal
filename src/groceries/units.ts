@@ -31,3 +31,40 @@ export function normalizeUnit(unit: string | null | undefined): string | null {
   if (!u) return null;
   return ALIASES[u] ?? u;
 }
+
+/** Units offered for "each one holds". Weight first, then volume. */
+export const SIZE_UNIT_CHOICES = ['oz', 'lb', 'g', 'kg', 'cup', 'quart', 'gallon', 'ml', 'l'] as const;
+
+// Weight in grams, volume in milliliters. Mirrors unit_measure() in the database.
+// "oz" is weight; "fl oz" normalizes to it, so fluid ounces convert as weight.
+const MEASURES: Record<string, { dimension: 'weight' | 'volume'; factor: number }> = {
+  oz: { dimension: 'weight', factor: 28.349523125 },
+  lb: { dimension: 'weight', factor: 453.59237 },
+  g: { dimension: 'weight', factor: 1 },
+  kg: { dimension: 'weight', factor: 1000 },
+  tsp: { dimension: 'volume', factor: 4.92892159375 },
+  tbsp: { dimension: 'volume', factor: 14.78676478125 },
+  cup: { dimension: 'volume', factor: 236.5882365 },
+  pint: { dimension: 'volume', factor: 473.176473 },
+  quart: { dimension: 'volume', factor: 946.352946 },
+  gallon: { dimension: 'volume', factor: 3785.411784 },
+  ml: { dimension: 'volume', factor: 1 },
+  l: { dimension: 'volume', factor: 1000 },
+};
+
+/** True for weight and volume units; false for containers, counts, and blank. */
+export function isMeasureUnit(unit: string | null | undefined): boolean {
+  const u = normalizeUnit(unit);
+  return u != null && u in MEASURES;
+}
+
+/** Converts between the same unit or units of one dimension. Null when they cannot convert. */
+export function convertQuantity(quantity: number, from: string | null | undefined, to: string | null | undefined): number | null {
+  const f = normalizeUnit(from) ?? '';
+  const t = normalizeUnit(to) ?? '';
+  if (f === t) return quantity;
+  const a = MEASURES[f];
+  const b = MEASURES[t];
+  if (!a || !b || a.dimension !== b.dimension) return null;
+  return (quantity * a.factor) / b.factor;
+}

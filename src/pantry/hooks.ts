@@ -42,6 +42,8 @@ export function useUpsertPantryItems() {
             ...(patch.display_name ? { display_name: patch.display_name } : {}),
             ...('quantity' in patch ? { quantity: patch.quantity ?? null } : {}),
             ...('unit' in patch ? { unit: patch.unit ?? null } : {}),
+            ...('package_quantity' in patch ? { package_quantity: patch.package_quantity ?? null } : {}),
+            ...('package_unit' in patch ? { package_unit: patch.package_unit ?? null } : {}),
           };
         }),
       );

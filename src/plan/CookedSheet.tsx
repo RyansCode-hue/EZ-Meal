@@ -4,7 +4,7 @@ import { BottomSheet } from '@/components/BottomSheet';
 import { Button } from '@/components/Button';
 import { Notice } from '@/components/Notice';
 import { usePantry, useUpsertPantryItems } from '@/pantry/hooks';
-import { formatAmount } from '@/pantry/amount';
+import { formatAmount, formatPantryAmount } from '@/pantry/amount';
 import { plannedDeduction, servingsFactor } from './deduction';
 import { StatusControl } from '@/pantry/StatusControl';
 import type { PantryStatus, PantryUpsert } from '@/pantry/types';
@@ -75,7 +75,7 @@ export function CookedSheet({ entry, onClose, onDone }: { entry: PlanEntry | nul
             <View key={ing.id} style={styles.row}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.name}>{item?.display_name ?? ing.name}</Text>
-                {!item ? <Text style={type.small}>Not tracked</Text> : ded ? <Text style={type.small}>{`Uses ${formatAmount(ded.take, item.unit)}, leaves ${formatAmount(ded.left, item.unit)}`}</Text> : item.quantity != null ? <Text style={type.small}>{`Has ${formatAmount(item.quantity, item.unit)}`}</Text> : null}
+                {!item ? <Text style={type.small}>Not tracked</Text> : ded ? <Text style={type.small}>{`Uses ${formatAmount(ded.take, item.unit)}, leaves ${formatAmount(ded.left, item.unit)}`}</Text> : item.quantity != null ? <Text style={type.small}>{`Has ${formatPantryAmount(item)}`}</Text> : null}
               </View>
               <StatusControl value={choices[ing.canonical_name] ?? null} onChange={(s) => setChoices((c) => ({ ...c, [ing.canonical_name]: s }))} label={ing.name} />
             </View>

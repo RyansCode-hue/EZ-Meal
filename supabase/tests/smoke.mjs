@@ -308,6 +308,39 @@ let savedId = null;
   check('deduction records are cleared on un-cook', leftover?.length === 0, JSON.stringify(leftover));
 }
 
+// Container sizes and unit conversion when cooking
+{
+  const { data: rid, error: sErr } = await ryan.rpc('save_recipe', { p_recipe: { title: 'Convert test', servings: 1 }, p_ingredients: [
+    { quantity: 8, unit: 'oz', name: 'pasta', canonical_name: 'pasta', store_section: 'pantry' },
+    { quantity: 1, unit: 'lb', name: 'flour', canonical_name: 'flour', store_section: 'pantry' },
+    { quantity: 2, unit: 'cups', name: 'milk', canonical_name: 'milk', store_section: 'dairy_eggs' },
+    { quantity: 1, unit: 'can', name: 'beans', canonical_name: 'beans', store_section: 'canned_jarred' },
+    { quantity: 1, unit: 'cup', name: 'rice', canonical_name: 'rice', store_section: 'pantry' },
+  ], p_steps: [{ text: 'Cook.' }] });
+  const { data: up, error: uErr } = await ryan.rpc('upsert_pantry_items', { p_items: [
+    { canonical_name: 'pasta', quantity: 2, unit: 'box', package_quantity: 16, package_unit: 'oz' },
+    { canonical_name: 'flour', quantity: 32, unit: 'oz' },
+    { canonical_name: 'milk', quantity: 1, unit: 'gallon' },
+    { canonical_name: 'beans', quantity: 3, unit: 'can', package_quantity: 15, package_unit: 'oz' },
+    { canonical_name: 'rice', quantity: 2, unit: 'bag', package_quantity: 2, package_unit: 'lb' },   // cup vs lb: untouched
+  ] });
+  check('upsert stores package size', !sErr && !uErr && Number(up?.find((r) => r.canonical_name === 'pasta')?.package_quantity) === 16 && up?.find((r) => r.canonical_name === 'pasta')?.package_unit === 'oz', sErr?.message ?? uErr?.message ?? JSON.stringify(up));
+  const { data: ce } = await ryan.rpc('add_plan_entry', { p_date: '2026-09-13', p_kind: 'recipe', p_recipe_id: rid, p_servings: 1 });
+  const read = async () => Object.fromEntries((await ryan.from('pantry_items').select('canonical_name, quantity, package_quantity').in('canonical_name', ['pasta', 'flour', 'milk', 'beans', 'rice'])).data.map((r) => [r.canonical_name, Number(r.quantity)]));
+  const { error: cErr } = await ryan.rpc('set_plan_entry_cooked', { p_id: ce.id, p_cooked: true });
+  const c1 = await read();
+  check('cooking takes part of a container through its size', !cErr && c1.pasta === 1.5 && c1.beans === 2, cErr?.message ?? JSON.stringify(c1));
+  check('cooking converts lb to oz and cups to gallons', c1.flour === 16 && c1.milk === 0.875, JSON.stringify(c1));
+  check('weight-sized container is untouched by a volume ingredient', c1.rice === 2, JSON.stringify(c1));
+  await ryan.rpc('set_plan_entry_cooked', { p_id: ce.id, p_cooked: false });
+  const c2 = await read();
+  check('un-cooking restores converted deductions', c2.pasta === 2 && c2.flour === 32 && c2.milk === 1 && c2.beans === 3, JSON.stringify(c2));
+  const { data: cl } = await ryan.rpc('upsert_pantry_items', { p_items: [{ canonical_name: 'pasta', package_quantity: null, package_unit: '' }] });
+  check('upsert clears package size when null is sent', cl?.[0]?.package_quantity === null && cl?.[0]?.package_unit === null && Number(cl?.[0]?.quantity) === 2, JSON.stringify(cl));
+  const { error: zErr } = await ryan.rpc('upsert_pantry_items', { p_items: [{ canonical_name: 'pasta', package_quantity: 0 }] });
+  check('package size must be positive', !!zErr, 'zero accepted');
+}
+
 // Reminders: actor stamping, member preferences, settings table locked down
 {
   const { data: e } = await ryan.rpc('add_plan_entry', { p_date: '2026-10-01', p_kind: 'skip' });

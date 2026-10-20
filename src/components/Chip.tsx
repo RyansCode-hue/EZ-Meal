@@ -6,9 +6,10 @@ type Props = {
   active?: boolean;
   onPress?: () => void;
   onRemove?: () => void;
+  accessibilityLabel?: string;
 };
 
-export function Chip({ label, active, onPress, onRemove }: Props) {
+export function Chip({ label, active, onPress, onRemove, accessibilityLabel }: Props) {
   const content = (
     <Text style={[styles.text, active && styles.textActive]}>
       {label}
@@ -19,7 +20,7 @@ export function Chip({ label, active, onPress, onRemove }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={onRemove ? `Remove ${label}` : label}
+      accessibilityLabel={onRemove ? `Remove ${label}` : (accessibilityLabel ?? label)}
       accessibilityState={{ selected: !!active }}
       onPress={onRemove ?? onPress}
       style={({ pressed }) => [styles.base, active && styles.active, pressed && { opacity: 0.8 }]}

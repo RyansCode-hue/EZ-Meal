@@ -1,17 +1,23 @@
-import { normalizeUnit } from '@/groceries/units';
+import { convertQuantity } from '@/groceries/units';
 import type { PantryItem } from '@/pantry/types';
 
 type Ingredient = { canonical_name: string; quantity: number | null; unit: string | null };
 
 /**
- * What marking an entry cooked will take from a tracked item, matching the
- * database rule: both sides carry an amount in the same normalized unit.
- * Returns null when nothing will be subtracted.
+ * What marking an entry cooked will take from a tracked item, in the item's own
+ * unit. Mirrors set_plan_entry_cooked(): convert into the item's unit, or else
+ * into containers through the item's package size. Null when nothing is taken.
  */
 export function plannedDeduction(ing: Ingredient, item: PantryItem | undefined, factor: number): { take: number; left: number } | null {
   if (!item || ing.quantity == null || item.quantity == null) return null;
-  if ((normalizeUnit(ing.unit) ?? '') !== (normalizeUnit(item.unit) ?? '')) return null;
-  const take = Math.min(item.quantity, ing.quantity * factor);
+  const need = ing.quantity * factor;
+  let take = convertQuantity(need, ing.unit, item.unit);
+  if (take == null && item.package_quantity != null && item.package_quantity > 0) {
+    const inSize = convertQuantity(need, ing.unit, item.package_unit);
+    take = inSize == null ? null : inSize / item.package_quantity;
+  }
+  if (take == null) return null;
+  take = Math.min(item.quantity, take);
   if (take <= 0) return null;
   return { take, left: item.quantity - take };
 }

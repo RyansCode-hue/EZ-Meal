@@ -19,4 +19,16 @@ describe('AmountFields', () => {
     const { getByText } = await render(<AmountFields amount="two" unit="" onAmountChange={jest.fn()} onUnitChange={jest.fn()} error="Use a number like 2, 1.5, or 1/2." />);
     expect(getByText('Use a number like 2, 1.5, or 1/2.')).toBeTruthy();
   });
+  it('asks how much each container holds for counted units', async () => {
+    const size = { amount: '', unit: '', onAmountChange: jest.fn(), onUnitChange: jest.fn() };
+    const { getByText, getByRole } = await render(<AmountFields amount="2" unit="box" onAmountChange={jest.fn()} onUnitChange={jest.fn()} size={size} />);
+    expect(getByText('Each box holds')).toBeTruthy();
+    await fireEvent.press(getByRole('button', { name: 'Each in oz' }));
+    expect(size.onUnitChange).toHaveBeenLastCalledWith('oz');
+  });
+  it('does not ask for a size when the unit is a weight', async () => {
+    const size = { amount: '', unit: '', onAmountChange: jest.fn(), onUnitChange: jest.fn() };
+    const { queryByText } = await render(<AmountFields amount="2" unit="lb" onAmountChange={jest.fn()} onUnitChange={jest.fn()} size={size} />);
+    expect(queryByText(/holds$/)).toBeNull();
+  });
 });

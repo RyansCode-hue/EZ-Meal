@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Pressable, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useDeletePantryItem, useParsePantryImages, usePantry, useUpsertPantryItems, type ParsedPantryItem } from '@/pantry/hooks';
 import { StatusControl } from '@/pantry/StatusControl';
 import { AmountFields } from '@/pantry/AmountFields';
-import { formatAmount, readAmount } from '@/pantry/amount';
+import { formatAmount, formatPantryAmount, readAmount, readSize, sizeApplies } from '@/pantry/amount';
 import type { PantryItem, PantryStatus, PantryUpsert } from '@/pantry/types';
 import { SECTION_ORDER } from '@/groceries/types';
 import { parseItemText } from '@/groceries/parseItem';
@@ -21,7 +21,7 @@ import { confirm } from '@/lib/confirm';
 import { colors, fonts, maxContentWidth, radius, space, tapTarget, type } from '@/theme/tokens';
 
 type Section = { title: string; data: PantryItem[] };
-type Amount = { quantity: number | null; unit: string | null };
+type Amount = { quantity: number | null; unit: string | null; package_quantity: number | null; package_unit: string | null };
 
 export default function PantryTab() {
   const pantry = usePantry();
@@ -76,7 +76,7 @@ export default function PantryTab() {
     }
     const quantity = amount.quantity ?? parsed.quantity;
     const unit = amount.unit ?? parsed.unit;
-    upsert.mutate([{ canonical_name: canonical, display_name: parsed.name, status, quantity, unit, store_section: section }], {
+    upsert.mutate([{ canonical_name: canonical, display_name: parsed.name, status, quantity, unit, package_quantity: amount.package_quantity, package_unit: amount.package_unit, store_section: section }], {
       onSuccess: () => setAddOpen(false),
       onError: fail,
     });
@@ -132,7 +132,7 @@ export default function PantryTab() {
         ListHeaderComponent={header}
         renderSectionHeader={({ section }) => <Text style={styles.sectionTitle}>{section.title}</Text>}
         renderItem={({ item }) => {
-          const amount = formatAmount(item.quantity, item.unit);
+          const amount = formatPantryAmount(item);
           return (
             <View style={styles.row}>
               <Pressable
@@ -192,27 +192,56 @@ function upsertFromParsed(c: ParsedPantryItem): PantryUpsert {
   };
 }
 
-function AddSheet({ visible, onClose, onAdd, busy }: { visible: boolean; onClose: () => void; onAdd: (text: string, status: PantryStatus, amount: Amount) => void; busy: boolean }) {
-  const [text, setText] = useState('');
-  const [amount, setAmount] = useState('');
-  const [unit, setUnit] = useState('');
-  const [status, setStatus] = useState<PantryStatus>('plenty');
+// Form state for amount, unit, and the per-container size. The size is only
+// read while it applies, so switching the unit to lb drops a stale size.
+function useAmountForm(initial?: { quantity: number | null; unit: string | null; package_quantity: number | null; package_unit: string | null }) {
+  const [amount, setAmount] = useState(initial?.quantity == null ? '' : formatAmount(initial.quantity, null));
+  const [unit, setUnit] = useState(initial?.unit ?? '');
+  const [sizeAmount, setSizeAmount] = useState(initial?.package_quantity == null ? '' : formatAmount(initial.package_quantity, null));
+  const [sizeUnit, setSizeUnit] = useState(initial?.package_unit ?? '');
   const read = readAmount(amount, unit);
-  const canAdd = !!text.trim() && read.ok;
-
-  function submit() {
-    if (!read.ok || !text.trim()) return;
-    onAdd(text, status, read);
-    setText('');
+  const applies = sizeApplies(amount, unit);
+  const size = applies ? readSize(sizeAmount, sizeUnit) : ({ ok: true, quantity: null, unit: null } as const);
+  const value: Amount | null = read.ok && size.ok ? { quantity: read.quantity, unit: read.unit, package_quantity: size.quantity, package_unit: size.unit } : null;
+  const fields = (
+    <AmountFields
+      amount={amount}
+      unit={unit}
+      onAmountChange={setAmount}
+      onUnitChange={setUnit}
+      error={read.ok ? null : read.error}
+      size={{ amount: sizeAmount, unit: sizeUnit, onAmountChange: setSizeAmount, onUnitChange: setSizeUnit, error: size.ok ? null : size.error }}
+    />
+  );
+  const reset = () => {
     setAmount('');
     setUnit('');
+    setSizeAmount('');
+    setSizeUnit('');
+  };
+  return { value, fields, reset };
+}
+
+function AddSheet({ visible, onClose, onAdd, busy }: { visible: boolean; onClose: () => void; onAdd: (text: string, status: PantryStatus, amount: Amount) => void; busy: boolean }) {
+  const [text, setText] = useState('');
+  const [status, setStatus] = useState<PantryStatus>('plenty');
+  const form = useAmountForm();
+  const canAdd = !!text.trim() && form.value != null;
+
+  function submit() {
+    if (!form.value || !text.trim()) return;
+    onAdd(text, status, form.value);
+    setText('');
+    form.reset();
   }
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title="Add to the pantry">
-      <TextField label="Item" value={text} onChangeText={setText} placeholder="Rice" autoFocus hint="The store section is filled in for you." returnKeyType="done" onSubmitEditing={submit} />
-      <AmountFields amount={amount} unit={unit} onAmountChange={setAmount} onUnitChange={setUnit} error={read.ok ? null : read.error} />
-      <StatusControl value={status} onChange={setStatus} label="Status" />
+      <ScrollView style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+        <TextField label="Item" value={text} onChangeText={setText} placeholder="Rice" autoFocus hint="The store section is filled in for you." returnKeyType="done" onSubmitEditing={submit} />
+        {form.fields}
+        <StatusControl value={status} onChange={setStatus} label="Status" />
+      </ScrollView>
       <Button title="Add" loading={busy} disabled={!canAdd} onPress={submit} />
     </BottomSheet>
   );
@@ -220,23 +249,23 @@ function AddSheet({ visible, onClose, onAdd, busy }: { visible: boolean; onClose
 
 function EditSheet({ item, onClose, onSave, busy }: { item: PantryItem; onClose: () => void; onSave: (patch: PantryUpsert) => void; busy: boolean }) {
   const [name, setName] = useState(item.display_name);
-  const [amount, setAmount] = useState(item.quantity == null ? '' : formatAmount(item.quantity, null));
-  const [unit, setUnit] = useState(item.unit ?? '');
   const [status, setStatus] = useState<PantryStatus>(item.status);
-  const read = readAmount(amount, unit);
+  const form = useAmountForm(item);
 
   function submit() {
-    if (!read.ok) return;
-    // Quantity and unit are always sent so a cleared field clears the stored amount.
-    onSave({ canonical_name: item.canonical_name, display_name: name.trim() || item.display_name, status, quantity: read.quantity, unit: read.unit });
+    if (!form.value) return;
+    // Every amount field is sent so a cleared field clears the stored value.
+    onSave({ canonical_name: item.canonical_name, display_name: name.trim() || item.display_name, status, ...form.value });
   }
 
   return (
     <BottomSheet visible onClose={onClose} title="Edit item">
-      <TextField label="Item" value={name} onChangeText={setName} returnKeyType="done" onSubmitEditing={submit} />
-      <AmountFields amount={amount} unit={unit} onAmountChange={setAmount} onUnitChange={setUnit} error={read.ok ? null : read.error} />
-      <StatusControl value={status} onChange={setStatus} label="Status" />
-      <Button title="Save" loading={busy} disabled={!read.ok} onPress={submit} />
+      <ScrollView style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+        <TextField label="Item" value={name} onChangeText={setName} returnKeyType="done" onSubmitEditing={submit} />
+        {form.fields}
+        <StatusControl value={status} onChange={setStatus} label="Status" />
+      </ScrollView>
+      <Button title="Save" loading={busy} disabled={!form.value} onPress={submit} />
     </BottomSheet>
   );
 }
@@ -296,5 +325,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.bodySemibold, fontSize: 16, color: colors.ink },
   amountHint: { color: colors.muted, opacity: 0.7 },
   deleteBtn: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
+  formScroll: { flexShrink: 1 },
+  form: { gap: space.md },
   reviewRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.rule },
 });
