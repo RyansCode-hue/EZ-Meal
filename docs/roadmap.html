@@ -142,11 +142,15 @@ code {
 }
 .decision-title { font-weight: 600; }
 .decision > p { color: var(--muted); }
-.models { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
-.model { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.model h3 { font-size: 1.05rem; }
-.model ol { margin: 0; padding-left: 1.2rem; font-size: 0.93rem; display: grid; gap: 2px; }
-.model p { font-size: 0.86rem; color: var(--muted); }
+
+/* The four-step capture system: a real cycle, so the steps are numbered */
+.cycle { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: step; }
+.cycle li { counter-increment: step; display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 12px; background: var(--accent-soft); min-width: 0; }
+.cycle-name { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+.cycle-name::before { content: counter(step) " "; color: var(--muted); font-weight: 500; }
+.cycle-note { font-size: 0.9rem; color: var(--ink); }
+.decision.decided::before { color: var(--accent); }
+.decision-title .chip { margin-left: 6px; vertical-align: 2px; }
 
 footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
 
@@ -157,7 +161,7 @@ footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--ru
   .phase { padding: 16px; }
   .phase-head { grid-template-columns: auto 1fr; }
   .phase-chips { grid-column: 1 / -1; justify-content: flex-start; }
-  .models { grid-template-columns: 1fr; }
+  .cycle { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>
 
@@ -165,7 +169,7 @@ footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--ru
   <header>
     <span class="label">Household app · Roadmap</span>
     <h1>EZ Plan Roadmap</h1>
-    <p class="lede">EZ Meal is the meal planner we use today. Next it becomes <strong>EZ Plan</strong>: one shared place to capture and plan meals and household tasks.</p>
+    <p class="lede">EZ Meal is the meal planner we use today. Next it becomes <strong>EZ Plan</strong>: our shared capture system for meals and household tasks, built on Capture, Organize, Review, Engage.</p>
     <div class="meta">
       <span>Updated October 19, 2026</span>
       <span>Ryan &amp; household</span>
@@ -252,10 +256,16 @@ footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--ru
 
   <section aria-labelledby="stage2">
     <div class="stage-head">
-      <span class="label">Stage 2 · Draft</span>
+      <span class="label">Stage 2</span>
       <h2 id="stage2">Become EZ Plan</h2>
+      <p class="muted">EZ Plan follows our four-part capture system. Meals become one area inside it; the planner, grocery list, and pantry carry over.</p>
     </div>
-    <p class="draft-note">This stage is a draft. The capture model, the first open decision below, shapes the inbox, tasks, and navigation.</p>
+    <ol class="cycle" aria-label="The capture system">
+      <li><span class="cycle-name">Capture</span><span class="cycle-note">Get anything out of your head in seconds, from any screen, into one shared inbox.</span></li>
+      <li><span class="cycle-name">Organize</span><span class="cycle-note">Turn each item into what it is: a task, a grocery item, a meal, a recipe, or a note.</span></li>
+      <li><span class="cycle-name">Review</span><span class="cycle-note">Once a week, on Saturday's planning day, walk the inbox, the week, and open tasks together.</span></li>
+      <li><span class="cycle-name">Engage</span><span class="cycle-note">Each day, open to what matters now: tonight's dinner, what is due, and who is on it.</span></li>
+    </ol>
 
     <article class="phase" aria-labelledby="p12">
       <div class="phase-head">
@@ -273,15 +283,58 @@ footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--ru
     <article class="phase" aria-labelledby="p13">
       <div class="phase-head">
         <span class="phase-num">13</span>
-        <h3 id="p13">Capture and tasks</h3>
-        <div class="phase-chips"><span class="chip later">Later</span><span class="chip decide">Decide</span></div>
+        <h3 id="p13">Capture</h3>
+        <div class="phase-chips"><span class="chip later">Later</span></div>
       </div>
       <ul class="items">
-        <li class="item"><span class="item-name">Pick the capture model</span><span class="size" aria-label="Size S">S</span><span class="item-note">See the open decision below.</span></li>
-        <li class="item"><span class="item-name">Shared inbox</span><span class="size" aria-label="Size M">M</span><span class="item-note">One place to drop anything: typed, a photo, later voice. Claude sorts each item into a task, a grocery item, a meal idea, or a recipe, and either of you can correct it.</span></li>
-        <li class="item"><span class="item-name">Tasks</span><span class="size" aria-label="Size L">L</span><span class="item-note">Owner (Ryan, his wife, or both), due date, repeat, and done. Tasks show on the week view beside meals.</span></li>
+        <li class="item"><span class="item-name">Shared inbox</span><span class="size" aria-label="Size M">M</span><span class="item-note">One list you both see, newest first, showing who added each item.</span></li>
+        <li class="item"><span class="item-name">Capture button on every screen</span><span class="size" aria-label="Size S">S</span><span class="item-note">Type a line and press enter. Nothing else is needed at capture time.</span></li>
+        <li class="item"><span class="item-name">Photo capture</span><span class="size" aria-label="Size S">S</span><span class="item-note">A receipt, a flyer, a recipe page, a note on the fridge, saved with the item.</span></li>
+        <li class="item"><span class="item-name">Voice capture</span><span class="size" aria-label="Size M">M</span><span class="item-note">Later, on the phone apps. Speech to text straight into the inbox.</span></li>
+        <li class="item"><span class="item-name">Grocery shortcut</span><span class="size" aria-label="Size S">S</span><span class="item-note">"Milk" typed into capture can go straight to the grocery list when Claude is sure.</span></li>
+      </ul>
+    </article>
+
+    <article class="phase" aria-labelledby="p14">
+      <div class="phase-head">
+        <span class="phase-num">14</span>
+        <h3 id="p14">Organize</h3>
+        <div class="phase-chips"><span class="chip later">Later</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Tasks</span><span class="size" aria-label="Size L">L</span><span class="item-note">Title, owner (Ryan, his wife, or both), optional due date, repeat, notes, and done.</span></li>
+        <li class="item"><span class="item-name">Lists</span><span class="size" aria-label="Size M">M</span><span class="item-note">Areas such as Home, Errands, and Meals. The starting set is an open decision.</span></li>
+        <li class="item"><span class="item-name">Process an inbox item</span><span class="size" aria-label="Size M">M</span><span class="item-note">Turn it into a task, grocery item, plan entry, recipe, or note in one or two taps.</span></li>
+        <li class="item"><span class="item-name">Claude suggests the sort</span><span class="size" aria-label="Size M">M</span><span class="item-note">Proposes the type, owner, due date, and list; you accept or change it. Follows household notes like the meal chat does.</span></li>
+        <li class="item"><span class="item-name">Someday list</span><span class="size" aria-label="Size S">S</span><span class="item-note">Ideas that are not for this week, kept out of the way until Review.</span></li>
+      </ul>
+    </article>
+
+    <article class="phase" aria-labelledby="p15">
+      <div class="phase-head">
+        <span class="phase-num">15</span>
+        <h3 id="p15">Review</h3>
+        <div class="phase-chips"><span class="chip later">Later</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Weekly review on the planning day</span><span class="size" aria-label="Size M">M</span><span class="item-note">The Saturday reminder opens a guided review instead of only the planner.</span></li>
+        <li class="item"><span class="item-name">Review steps</span><span class="size" aria-label="Size M">M</span><span class="item-note">Empty the inbox, check last week (done, missed, carry over), plan meals, schedule the week's tasks, glance at Someday, then build the grocery list.</span></li>
+        <li class="item"><span class="item-name">Review together</span><span class="size" aria-label="Size S">S</span><span class="item-note">Both phones show the same review live, so you can do it side by side.</span></li>
+        <li class="item"><span class="item-name">Daily glance</span><span class="size" aria-label="Size S">S</span><span class="item-note">An optional evening check: anything left in the inbox, and tomorrow's dinner.</span></li>
+      </ul>
+    </article>
+
+    <article class="phase" aria-labelledby="p16">
+      <div class="phase-head">
+        <span class="phase-num">16</span>
+        <h3 id="p16">Engage</h3>
+        <div class="phase-chips"><span class="chip later">Later</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Today screen</span><span class="size" aria-label="Size M">M</span><span class="item-note">Opens first: tonight's dinner, your tasks due today, anything overdue, and what your partner has today.</span></li>
+        <li class="item"><span class="item-name">Week view with meals and tasks</span><span class="size" aria-label="Size M">M</span><span class="item-note">The current planner grows to show tasks beside meals on each day.</span></li>
         <li class="item"><span class="item-name">Task reminders</span><span class="size" aria-label="Size M">M</span><span class="item-note">Built on the meal notifications: due today, and "your partner gave you a task".</span></li>
-        <li class="item"><span class="item-name">Navigation</span><span class="size" aria-label="Size M">M</span><span class="item-note">Five tabs fit a phone. Proposal: Week, Inbox, Tasks, Meals (recipes, groceries, and pantry inside), Ideas.</span></li>
+        <li class="item"><span class="item-name">Navigation</span><span class="size" aria-label="Size M">M</span><span class="item-note">Five tabs: Today, Inbox, Week, Lists, Meals (recipes, groceries, pantry, and the meal chat inside). Review starts from the planning reminder or a button on Week.</span></li>
       </ul>
     </article>
   </section>
@@ -291,26 +344,17 @@ footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--ru
       <h2 id="decisions">Open decisions</h2>
     </div>
     <ol class="decisions">
+      <li class="decision decided">
+        <span class="decision-title">Capture model <span class="chip done">Decided</span></span>
+        <p>Capture, Organize, Review, Engage. Close to GTD, without a separate Clarify step; deciding what an item is happens during Organize.</p>
+      </li>
       <li class="decision">
-        <span class="decision-title">Which capture model should EZ Plan follow?</span>
-        <p>Each one leads to a different inbox and task layout.</p>
-        <div class="models">
-          <div class="model">
-            <h3>CODE</h3>
-            <ol><li>Capture</li><li>Organize</li><li>Distill</li><li>Express</li></ol>
-            <p>Building a Second Brain. Steps for handling what you save.</p>
-          </div>
-          <div class="model">
-            <h3>PARA</h3>
-            <ol><li>Projects</li><li>Areas</li><li>Resources</li><li>Archives</li></ol>
-            <p>The same author's four places to file things.</p>
-          </div>
-          <div class="model">
-            <h3>GTD</h3>
-            <ol><li>Capture</li><li>Clarify</li><li>Organize</li><li>Reflect</li><li>Engage</li></ol>
-            <p>Getting Things Done. Five steps, built around an inbox and next actions.</p>
-          </div>
-        </div>
+        <span class="decision-title">Is everything shared, or can each of you keep private tasks?</span>
+        <p>Shared is simpler. Private tasks need a per-person filter on every list and reminder.</p>
+      </li>
+      <li class="decision">
+        <span class="decision-title">Which lists to start with?</span>
+        <p>Proposed: Home, Errands, Meals, Someday. Also whether a list can hold projects with their own steps.</p>
       </li>
       <li class="decision">
         <span class="decision-title">When should Android builds resume?</span>
@@ -318,7 +362,7 @@ footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--ru
       </li>
       <li class="decision">
         <span class="decision-title">When to buy the Apple Developer account?</span>
-        <p>It gates the iPhone app in Phase 11.</p>
+        <p>It gates the iPhone app in Phase 11 and voice capture on her phone.</p>
       </li>
       <li class="decision">
         <span class="decision-title">Should chat history be per phone or shared?</span>

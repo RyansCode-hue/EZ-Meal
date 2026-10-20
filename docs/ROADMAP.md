@@ -2,8 +2,8 @@
 
 Updated 2026-10-19. Published copy: https://claude.ai/artifact/AHrtqMdykYC5eAku7Cudj7 (from `docs/roadmap.html`). This file is the source of truth.
 
-EZ Meal is the meal planner Ryan and his wife use today. The next stage turns it into **EZ Plan**: one shared
-place to capture and plan meals and household tasks.
+EZ Meal is the meal planner Ryan and his wife use today. The next stage turns it into **EZ Plan**: their shared
+capture system for meals and household tasks, built on Capture, Organize, Review, Engage.
 
 Status key: **Done**, **Next**, **Later**, **Decide** (needs a call from Ryan before work starts).
 Size is rough relative effort: S (an evening), M (a few sessions), L (a week or more of sessions).
@@ -56,7 +56,15 @@ Size is rough relative effort: S (an evening), M (a few sessions), L (a week or 
 
 ## Stage 2: EZ Plan (meals and tasks)
 
-Draft. The capture model below is the open question that shapes everything else in this stage.
+EZ Plan follows Ryan's four-part capture system, close to GTD: **Capture, Organize, Review, Engage**. Meals are
+one area inside it; the planner, grocery list, and pantry carry over unchanged.
+
+| Step | What it means in EZ Plan |
+| --- | --- |
+| Capture | Get anything out of your head in a few seconds, from any screen, into one shared inbox. |
+| Organize | Turn each inbox item into what it really is: a task, a grocery item, a meal on the plan, a recipe, or a note. |
+| Review | Once a week, on the planning day (Saturday today), walk through the inbox, the coming week, and open tasks together. |
+| Engage | Each day, open to what matters now: tonight's dinner, what is due, and who is doing it. |
 
 ### Phase 12: Rename to EZ Plan (Next after Stage 1)
 
@@ -66,21 +74,49 @@ Draft. The capture model below is the open question that shapes everything else 
 | New website address | S | Proposed ez-plan.expo.app. The old ez-meal link must keep working for the home-screen icon on her iPhone. |
 | Repo and docs | S | Rename the GitHub repo and project folder; keep history. |
 
-### Phase 13: Capture and tasks (Later, Decide)
+### Phase 13: Capture (Later)
 
 | Item | Size | Notes |
 | --- | --- | --- |
-| Pick the capture model | S | See the open decision below. |
-| Shared inbox | M | One place to drop anything: typed, a photo, later voice. Claude sorts each item into a task, a grocery item, a meal idea, or a recipe, and either of you can correct it. |
-| Tasks | L | Owner (Ryan, wife, or both), due date, repeat, done. Shows on the week view beside meals. |
-| Task reminders | M | Reuses the meal notifications: due today, and "your partner gave you a task". |
-| Navigation | M | Five tabs fit a phone. Proposal: Week, Inbox, Tasks, Meals (recipes, groceries, pantry inside), Ideas. |
+| Shared inbox | M | One list both of you see, newest first, with who added each item. |
+| Capture button on every screen | S | Type a line and press enter. Nothing else is required at capture time. |
+| Photo capture | S | A receipt, a flyer, a recipe page, a note on the fridge. Stored with the item. |
+| Voice capture | M | Later, phone only. Speech to text into the inbox. |
+| Grocery shortcut | S | "Milk" typed into capture can go straight to the grocery list when Claude is sure. |
+
+### Phase 14: Organize (Later)
+
+| Item | Size | Notes |
+| --- | --- | --- |
+| Tasks | L | Title, owner (Ryan, his wife, or both), optional due date, repeat, notes, done. |
+| Lists | M | Areas such as Home, Errands, Kids, Meals. Exact set is an open decision. |
+| Process an inbox item | M | Turn it into a task, grocery item, plan entry, recipe, or note in one or two taps. |
+| Claude suggests the sort | M | Proposes the type, owner, due date, and list; you accept or change it. Learns from household notes like the meal chat does. |
+| Someday list | S | Ideas that are not for this week, kept out of the way until Review. |
+
+### Phase 15: Review (Later)
+
+| Item | Size | Notes |
+| --- | --- | --- |
+| Weekly review on the planning day | M | The Saturday reminder opens a guided review instead of only the planner. |
+| Review steps | M | Empty the inbox, check last week (done, missed, carry over), plan meals, schedule tasks for the week, glance at Someday, then build the grocery list. |
+| Review together | S | Both phones show the same review live, so you can do it side by side. |
+| Daily glance | S | Optional evening check: anything still in the inbox, tomorrow's dinner. |
+
+### Phase 16: Engage (Later)
+
+| Item | Size | Notes |
+| --- | --- | --- |
+| Today screen | M | Opens first: tonight's dinner, tasks due today for you, overdue items, and what your partner has today. |
+| Week view with meals and tasks | M | The current planner grows to show tasks beside meals on each day. |
+| Task reminders | M | Built on the meal notifications: due today, and "your partner gave you a task". |
+| Navigation | M | Five tabs: Today, Inbox, Week, Lists, Meals (recipes, groceries, pantry, and the meal chat inside). Review starts from the planning reminder or a button on Week. |
 
 ## Open decisions
 
-1. **Capture model.** Which four-part system should EZ Plan follow? Candidates: CODE (Capture, Organize,
-   Distill, Express), PARA (Projects, Areas, Resources, Archives), or GTD's five steps (Capture, Clarify,
-   Organize, Reflect, Engage).
-2. **When to resume Android builds.** Phase 9 assumes soon.
-3. **Apple Developer account timing.** Gates Phase 11.
-4. **Chat history scope.** Kept per phone, or shared between both of you.
+1. **Capture model.** Decided 2026-10-19: Capture, Organize, Review, Engage.
+2. **Private items.** Is everything shared between you two, or can each person keep private tasks?
+3. **Lists.** Which areas to start with (proposed: Home, Errands, Meals, Someday) and whether lists can hold projects.
+4. **When to resume Android builds.** Phase 9 assumes soon.
+5. **Apple Developer account timing.** Gates Phase 11 and voice capture on iPhone.
+6. **Chat history scope.** Kept per phone, or shared between both of you.
