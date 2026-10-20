@@ -1,6 +1,7 @@
 import type { ISODate } from '@/lib/dates';
 
-export type PlanEntryKind = 'recipe' | 'eating_out' | 'skip';
+/** `meal` is a named dinner with no recipe behind it, like "Tacos". */
+export type PlanEntryKind = 'recipe' | 'meal' | 'eating_out' | 'skip';
 
 export type PlanEntryRecipe = {
   id: string;
@@ -26,6 +27,7 @@ export type PlanEntry = {
 
 export function entryTitle(e: PlanEntry): string {
   if (e.kind === 'recipe') return e.recipe?.title ?? 'Recipe';
+  if (e.kind === 'meal') return e.label || 'Meal';
   if (e.kind === 'eating_out') return e.label || 'Eating out';
   return e.label || 'Skip';
 }

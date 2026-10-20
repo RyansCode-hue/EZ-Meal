@@ -10,6 +10,7 @@ const TABLE_KEYS: Record<string, string[][]> = {
   recipes: [['recipes'], ['recipe']],
   grocery_items: [['groceries']],
   pantry_items: [['pantry']],
+  household_notes: [['household-notes']],
 };
 
 export function RealtimeSync({ householdId }: { householdId: string }) {

@@ -88,10 +88,18 @@ Spec: docs/SPEC.md
 - [x] Marking a recipe cooked subtracts its scaled ingredient amounts from pantry items tracked in the same unit; zero stays as Out (items are never removed); un-cooking restores exactly what was taken (`cook_deductions`)
 - [x] Container size: counted pantry items (box, can, bottle, no unit) record how much each holds; cooking converts recipe units into the item's unit (lb/oz, cup/gallon) or into containers via that size
 - [x] Ideas: assistant recipes open a read-only preview (`/recipes/preview`) with a "Save as a recipe" button; the list row no longer has a save button, and a saved idea opens the saved recipe instead of saving twice
+- [x] Plan: "Just a meal name" entries (new `meal` kind) for dinners without a recipe, with Rename for named meals and eating out
+- [x] Ideas: meal chat with the full conversation, one-tap "build a recipe around" proteins, follow-ups that see earlier suggestions, and household notes the assistant saves from what you tell it (viewable, addable, forgettable)
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 
 ## Review notes
+
+### Meal chat, household notes, named meals (2026-10-19)
+- `household_notes` (RLS by household, realtime) holds what the assistant knows. `suggest-meals` reads the notes into the system prompt and returns `remember`; the function saves up to 3 new notes per turn (60 max, 200 chars each, near-duplicates skipped) and reports `remembered` or `remember_error`, so a failed save is visible in the chat.
+- Assistant turns sent back to the model end with a bracketed list of the recipes shown, so "the second one" resolves. History is the last 24 turns, always starting with a user turn.
+- `plan_entry_kind` gained `meal` (own migration; an enum value cannot be used in the transaction that adds it). `add_plan_entry` requires a name for it and caps names at 80 characters. Partner pushes name the meal.
+- Verified: `tsc` clean; jest 68 tests (chat history, chat card send/follow-up/failure, meal-name sheet); smoke test covers named meals and note isolation; local function run confirms validation and data loading up to the Claude call; local browser check of add/rename meal, chat starters, failure path, and notes sheet. A real Claude reply was not exercised locally (no key).
 
 ### Ideas preview (2026-10-19)
 - Held ideas live in memory (`src/recipes/draftStore.ts`) under a key passed as a route param; a reload loses them and the preview says so. Ingredient and step lists moved to `src/recipes/RecipeParts.tsx`, shared with the saved recipe page.

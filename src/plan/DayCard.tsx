@@ -16,9 +16,15 @@ type Props = {
 
 const KIND_ICON = {
   recipe: 'restaurant-outline',
+  meal: 'fast-food-outline',
   eating_out: 'storefront-outline',
   skip: 'remove-circle-outline',
 } as const;
+
+// Recipes and named meals are real dinners; eating out and skips are shown quieter.
+function isMealKind(e: PlanEntry): boolean {
+  return e.kind === 'recipe' || e.kind === 'meal';
+}
 
 export function DayCard({ date, entries, isToday, isPast, onAdd, onEntryPress, onEntryMenu }: Props) {
   const { weekday, date: dateLabel } = formatDay(date);
@@ -41,9 +47,9 @@ export function DayCard({ date, entries, isToday, isPast, onAdd, onEntryPress, o
           return (
             <View key={e.id} style={styles.entry}>
               <Pressable accessibilityRole="button" onPress={() => onEntryPress(e)} style={({ pressed }) => [styles.entryMain, pressed && { opacity: 0.7 }]}>
-                <Ionicons name={cooked ? 'checkmark-circle' : KIND_ICON[e.kind]} size={22} color={cooked ? colors.accent : e.kind === 'recipe' ? colors.ink : colors.muted} />
+                <Ionicons name={cooked ? 'checkmark-circle' : KIND_ICON[e.kind]} size={22} color={cooked ? colors.accent : isMealKind(e) ? colors.ink : colors.muted} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.entryTitle, e.kind !== 'recipe' && { color: colors.muted }, cooked && styles.cooked]} numberOfLines={2}>
+                  <Text style={[styles.entryTitle, !isMealKind(e) && { color: colors.muted }, cooked && styles.cooked]} numberOfLines={2}>
                     {entryTitle(e)}
                   </Text>
                   {sub ? <Text style={type.small}>{sub}</Text> : null}

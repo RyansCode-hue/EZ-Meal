@@ -63,6 +63,18 @@ export function useRemovePlanEntry() {
   });
 }
 
+export function useRenamePlanEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, label }: { id: string; label: string }) => {
+      const { error, count } = await supabase.from('plan_entries').update({ label }, { count: 'exact' }).eq('id', id);
+      if (error) throw error;
+      if (!count) throw new Error('That entry no longer exists.');
+    },
+    onSuccess: () => invalidatePlan(qc),
+  });
+}
+
 export function useMovePlanEntry() {
   const qc = useQueryClient();
   return useMutation({

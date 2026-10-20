@@ -341,6 +341,31 @@ let savedId = null;
   check('package size must be positive', !!zErr, 'zero accepted');
 }
 
+// Named meals on the plan
+{
+  const { data: m, error: mErr } = await ryan.rpc('add_plan_entry', { p_date: '2026-09-14', p_kind: 'meal', p_label: '  Tacos ' });
+  check('a named meal is added without a recipe', !mErr && m?.kind === 'meal' && m?.label === 'Tacos' && m?.recipe_id === null, mErr?.message ?? JSON.stringify(m));
+  const { error: blankErr } = await ryan.rpc('add_plan_entry', { p_date: '2026-09-14', p_kind: 'meal', p_label: '   ' });
+  check('a named meal needs a name', blankErr?.message?.includes('name the meal'), blankErr?.message);
+  const { error: longErr } = await ryan.rpc('add_plan_entry', { p_date: '2026-09-14', p_kind: 'meal', p_label: 'x'.repeat(81) });
+  check('a meal name over 80 characters is rejected', !!longErr, 'accepted');
+  const { data: seen } = await partner.from('plan_entries').select('label').eq('id', m.id).single();
+  check('partner sees the named meal', seen?.label === 'Tacos', JSON.stringify(seen));
+}
+
+// Household notes for the meal assistant
+{
+  const { error: nErr } = await ryan.from('household_notes').insert({ household_id: hh.id, text: 'Does not like spicy food.', source: 'chat' });
+  const { data: pn } = await partner.from('household_notes').select('text, source');
+  check('partner reads household notes', !nErr && pn?.some((n) => n.text === 'Does not like spicy food.' && n.source === 'chat'), nErr?.message ?? JSON.stringify(pn));
+  const { data: sn } = await stranger.from('household_notes').select('id');
+  check('stranger sees no household notes', (sn ?? []).length === 0, JSON.stringify(sn));
+  const { error: siErr } = await stranger.from('household_notes').insert({ household_id: hh.id, text: 'Injected' });
+  check('stranger cannot add notes to another household', !!siErr, 'insert accepted');
+  const { error: blank } = await ryan.from('household_notes').insert({ household_id: hh.id, text: '   ' });
+  check('blank notes are rejected', !!blank, 'blank accepted');
+}
+
 // Reminders: actor stamping, member preferences, settings table locked down
 {
   const { data: e } = await ryan.rpc('add_plan_entry', { p_date: '2026-10-01', p_kind: 'skip' });

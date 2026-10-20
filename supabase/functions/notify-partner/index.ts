@@ -53,7 +53,8 @@ Deno.serve(async (req) => {
   if (p.recipe_id) {
     const { data: r } = await admin.from('recipes').select('title').eq('id', p.recipe_id).maybeSingle();
     if (r?.title) what = r.title;
-  } else if (p.kind === 'eating_out') what = 'eating out';
+  } else if (p.kind === 'meal' && p.label) what = p.label;
+  else if (p.kind === 'eating_out') what = 'eating out';
   else if (p.kind === 'skip') what = 'a skip night';
   const day = new Date(p.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   const verb = p.type === 'INSERT' ? 'added' : p.type === 'DELETE' ? 'removed' : 'changed';

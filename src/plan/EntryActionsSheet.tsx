@@ -9,7 +9,8 @@ import { describeError } from '@/lib/errors';
 import { colors, type } from '@/theme/tokens';
 import { DayPickerSheet } from './DayPickerSheet';
 import { CookedSheet } from './CookedSheet';
-import { useMovePlanEntry, useRemovePlanEntry, useReorderPlanDay, useSetCooked, useSetEntryServings } from './hooks';
+import { useMovePlanEntry, useRemovePlanEntry, useRenamePlanEntry, useReorderPlanDay, useSetCooked, useSetEntryServings } from './hooks';
+import { NameMealSheet } from './NameMealSheet';
 import { entryTitle, type PlanEntry } from './types';
 
 type Props = {
@@ -25,6 +26,8 @@ export function EntryActionsSheet({ entry, dayEntries, weekDays, onClose }: Prop
   const move = useMovePlanEntry();
   const remove = useRemovePlanEntry();
   const setServings = useSetEntryServings();
+  const rename = useRenamePlanEntry();
+  const [renaming, setRenaming] = useState(false);
   const [pickingDay, setPickingDay] = useState(false);
   const [cooking, setCooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +48,7 @@ export function EntryActionsSheet({ entry, dayEntries, weekDays, onClose }: Prop
 
   return (
     <>
-      <BottomSheet visible={!!entry && !pickingDay && !cooking} onClose={onClose}>
+      <BottomSheet visible={!!entry && !pickingDay && !cooking && !renaming} onClose={onClose}>
         <Text style={type.heading}>{entryTitle(entry)}</Text>
         <Text style={type.small}>{formatDayLong(entry.date)}</Text>
         {error ? <Notice kind="error">{error}</Notice> : null}
@@ -69,6 +72,9 @@ export function EntryActionsSheet({ entry, dayEntries, weekDays, onClose }: Prop
             else setCooked.mutate({ id: entry.id, cooked: !cooked, recipeId: entry.recipe_id }, { onSuccess: onClose, onError: fail });
           }}
         />
+        {entry.kind === 'meal' || entry.kind === 'eating_out' ? (
+          <SheetRow icon={<Ionicons name="create-outline" size={22} color={colors.ink} />} title="Rename" onPress={() => setRenaming(true)} />
+        ) : null}
         <SheetRow icon={<Ionicons name="arrow-up" size={22} color={colors.ink} />} title="Move up" disabled={index <= 0} onPress={() => shift(-1)} />
         <SheetRow icon={<Ionicons name="arrow-down" size={22} color={colors.ink} />} title="Move down" disabled={index < 0 || index >= dayEntries.length - 1} onPress={() => shift(1)} />
         <SheetRow icon={<Ionicons name="calendar-outline" size={22} color={colors.ink} />} title="Move to another day" onPress={() => setPickingDay(true)} />
@@ -79,6 +85,31 @@ export function EntryActionsSheet({ entry, dayEntries, weekDays, onClose }: Prop
           onPress={() => remove.mutate(entry.id, { onSuccess: onClose, onError: fail })}
         />
       </BottomSheet>
+      {renaming ? (
+        <NameMealSheet
+          visible
+          title="Rename"
+          initial={entry.label ?? entryTitle(entry)}
+          action="Save"
+          busy={rename.isPending}
+          onClose={() => setRenaming(false)}
+          onSubmit={(label) =>
+            rename.mutate(
+              { id: entry.id, label },
+              {
+                onSuccess: () => {
+                  setRenaming(false);
+                  onClose();
+                },
+                onError: (e) => {
+                  setRenaming(false);
+                  fail(e);
+                },
+              },
+            )
+          }
+        />
+      ) : null}
       {cooking ? <CookedSheet entry={entry} onClose={() => setCooking(false)} onDone={() => { setCooking(false); onClose(); }} /> : null}
       <DayPickerSheet
         visible={pickingDay}

@@ -6,6 +6,7 @@ import { usePantry } from '@/pantry/hooks';
 import { recipeKey, recipesKey } from '@/recipes/hooks';
 import type { RecipeDraft } from '@/recipes/types';
 import { rankByPantry } from './rank';
+import { notesKey } from './notes';
 
 type RecipeForMatch = { id: string; title: string; servings: number | null; prep_minutes: number | null; cook_minutes: number | null; last_cooked_at: string | null; recipe_ingredients: Array<{ canonical_name: string }> };
 
@@ -29,15 +30,26 @@ export function usePantryMatches() {
 }
 
 export type ChatTurn = { role: 'user' | 'assistant'; content: string };
-export type Suggestion = { reply: string; existing: Array<{ recipe_id: string; why: string }>; new_recipes: RecipeDraft[] };
+export type Suggestion = {
+  reply: string;
+  existing: Array<{ recipe_id: string; why: string }>;
+  new_recipes: RecipeDraft[];
+  /** Notes the assistant saved from this turn. */
+  remembered: Array<{ id: string; text: string }>;
+  remember_error: string | null;
+};
 
 export function useSuggestMeals() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async (messages: ChatTurn[]): Promise<Suggestion> => {
       const { data, error } = await supabase.functions.invoke<Suggestion>('suggest-meals', { body: { messages } });
       if (error) throw await describeFunctionError(error, 'The assistant');
       if (!data?.reply) throw new Error('The assistant returned nothing.');
-      return data;
+      return { ...data, remembered: data.remembered ?? [], remember_error: data.remember_error ?? null };
+    },
+    onSuccess: (data) => {
+      if (data.remembered.length) qc.invalidateQueries({ queryKey: notesKey });
     },
   });
 }

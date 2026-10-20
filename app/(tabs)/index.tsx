@@ -9,6 +9,7 @@ import { useAddPlanEntry, usePlanEntries } from '@/plan/hooks';
 import { DayCard } from '@/plan/DayCard';
 import { RecipePickerSheet } from '@/plan/RecipePickerSheet';
 import { EntryActionsSheet } from '@/plan/EntryActionsSheet';
+import { NameMealSheet } from '@/plan/NameMealSheet';
 import type { PlanEntry } from '@/plan/types';
 import { BottomSheet, SheetRow } from '@/components/BottomSheet';
 import { Notice } from '@/components/Notice';
@@ -26,6 +27,7 @@ export default function PlanTab() {
   const add = useAddPlanEntry();
   const [addingTo, setAddingTo] = useState<ISODate | null>(null);
   const [pickingRecipeFor, setPickingRecipeFor] = useState<ISODate | null>(null);
+  const [namingFor, setNamingFor] = useState<ISODate | null>(null);
   const [activeEntry, setActiveEntry] = useState<PlanEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,7 +81,7 @@ export default function PlanTab() {
         ))}
       </ScrollView>
 
-      <BottomSheet visible={!!addingTo && !pickingRecipeFor} onClose={() => setAddingTo(null)} title="Add to the plan">
+      <BottomSheet visible={!!addingTo && !pickingRecipeFor && !namingFor} onClose={() => setAddingTo(null)} title="Add to the plan">
         <SheetRow
           icon={<Ionicons name="restaurant-outline" size={22} color={colors.accent} />}
           title="A recipe"
@@ -87,6 +89,12 @@ export default function PlanTab() {
           onPress={() => {
             setPickingRecipeFor(addingTo);
           }}
+        />
+        <SheetRow
+          icon={<Ionicons name="fast-food-outline" size={22} color={colors.accent} />}
+          title="Just a meal name"
+          body="Like Tacos or Leftovers, no recipe needed"
+          onPress={() => setNamingFor(addingTo)}
         />
         <SheetRow
           icon={<Ionicons name="storefront-outline" size={22} color={colors.ink} />}
@@ -116,6 +124,22 @@ export default function PlanTab() {
         onPick={(recipe) => {
           if (pickingRecipeFor) add.mutate({ date: pickingRecipeFor, kind: 'recipe', recipeId: recipe.id, servings: recipe.servings }, { onError: fail });
           setPickingRecipeFor(null);
+          setAddingTo(null);
+        }}
+      />
+
+      <NameMealSheet
+        visible={!!namingFor}
+        title="Add a meal"
+        action="Add to plan"
+        busy={add.isPending}
+        onClose={() => {
+          setNamingFor(null);
+          setAddingTo(null);
+        }}
+        onSubmit={(label) => {
+          if (namingFor) add.mutate({ date: namingFor, kind: 'meal', label }, { onError: fail });
+          setNamingFor(null);
           setAddingTo(null);
         }}
       />
