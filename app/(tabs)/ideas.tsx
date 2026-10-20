@@ -10,7 +10,7 @@ import { pickSurprise as pickSurpriseRecipe } from '@/ideas/rank';
 import { useAddPlanEntry } from '@/plan/hooks';
 import { DayPickerSheet } from '@/plan/DayPickerSheet';
 import { useRecipes } from '@/recipes/hooks';
-import { stashDraft } from '@/recipes/draftStore';
+import { getPreview, holdPreview, usePreviewStore } from '@/recipes/draftStore';
 import { totalMinutes } from '@/recipes/types';
 import { formatMinutes } from '@/recipes/quantity';
 import { Button } from '@/components/Button';
@@ -28,7 +28,9 @@ export default function IdeasTab() {
   const addToPlan = useAddPlanEntry();
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatTurn[]>([]);
-  const [answer, setAnswer] = useState<Suggestion | null>(null);
+  // Each new recipe is held under a key so the preview screen can show and save it.
+  const [answer, setAnswer] = useState<(Suggestion & { preview_keys: string[] }) | null>(null);
+  usePreviewStore();
   const [surprise, setSurprise] = useState<string | null>(null);
   const [planning, setPlanning] = useState<{ id: string; servings: number | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function IdeasTab() {
     const next: ChatTurn[] = [...history, { role: 'user' as const, content: q }].slice(-7);
     try {
       const result = await suggest.mutateAsync(next);
-      setAnswer(result);
+      setAnswer({ ...result, preview_keys: result.new_recipes.map(holdPreview) });
       setHistory([...next, { role: 'assistant' as const, content: result.reply }].slice(-8));
       setQuestion('');
     } catch (e) {
@@ -126,21 +128,27 @@ export default function IdeasTab() {
                   </View>
                 );
               })}
-              {answer.new_recipes.map((d, i) => (
-                <View key={`${d.title}-${i}`} style={styles.suggestion}>
-                  <Text style={styles.rowTitle}>{d.title}</Text>
-                  <Text style={type.small}>{[d.description, [d.servings ? `${d.servings} servings` : null, totalMinutes(d) != null ? formatMinutes(totalMinutes(d)) : null].filter(Boolean).join(' · ')].filter(Boolean).join(' ')}</Text>
-                  <Text style={type.small}>New recipe from the assistant. Check it before saving.</Text>
-                  <Button
-                    title="Save to recipes"
-                    variant="secondary"
-                    onPress={() => {
-                      stashDraft(d);
-                      router.push({ pathname: '/recipes/edit', params: { draft: '1' } });
-                    }}
-                  />
-                </View>
-              ))}
+              {answer.new_recipes.map((d, i) => {
+                const key = answer.preview_keys[i];
+                const savedId = getPreview(key)?.savedId ?? null;
+                const meta = [d.servings ? `${d.servings} servings` : null, totalMinutes(d) != null ? formatMinutes(totalMinutes(d)) : null].filter(Boolean).join(' · ');
+                return (
+                  <Pressable
+                    key={key}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${d.title}`}
+                    onPress={() => router.push(savedId ? `/recipes/${savedId}` : { pathname: '/recipes/preview', params: { key } })}
+                    style={({ pressed }) => [styles.suggestion, styles.ideaRow, pressed && { opacity: 0.7 }]}
+                  >
+                    <View style={{ flex: 1, gap: space.xs }}>
+                      <Text style={styles.rowTitle}>{d.title}</Text>
+                      {[d.description, meta].filter(Boolean).length ? <Text style={type.small}>{[d.description, meta].filter(Boolean).join(' ')}</Text> : null}
+                      <Text style={[type.small, styles.ideaTag]}>{savedId ? 'Saved to your recipes' : 'New idea · tap to see the full recipe'}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+                  </Pressable>
+                );
+              })}
               {history.length ? (
                 <Pressable accessibilityRole="button" onPress={() => { setHistory([]); setAnswer(null); }} hitSlop={6}>
                   <Text style={styles.link}>Start over</Text>
@@ -215,6 +223,8 @@ const styles = StyleSheet.create({
   askInput: { flex: 1, minHeight: tapTarget, paddingHorizontal: space.md, borderWidth: 1, borderColor: colors.ruleStrong, borderRadius: radius.md, backgroundColor: colors.surface, fontFamily: fonts.body, fontSize: 16, color: colors.ink },
   askBtn: { width: tapTarget, height: tapTarget, borderRadius: radius.md, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   suggestion: { gap: space.xs, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.rule },
+  ideaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: tapTarget },
+  ideaTag: { color: colors.accent },
   suggestionActions: { flexDirection: 'row', gap: space.sm, marginTop: 4 },
   link: { fontFamily: fonts.bodySemibold, fontSize: 14, color: colors.accent, paddingVertical: 6 },
 });

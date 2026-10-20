@@ -87,10 +87,16 @@ Spec: docs/SPEC.md
 - [x] Pantry amounts: Amount and Unit fields with unit chips on add, tap an item to edit its name, amount, and status; `upsert_pantry_items` clears an amount when null is sent; grocery Low note reads "You have 2 lb"
 - [x] Marking a recipe cooked subtracts its scaled ingredient amounts from pantry items tracked in the same unit; zero stays as Out (items are never removed); un-cooking restores exactly what was taken (`cook_deductions`)
 - [x] Container size: counted pantry items (box, can, bottle, no unit) record how much each holds; cooking converts recipe units into the item's unit (lb/oz, cup/gallon) or into containers via that size
+- [x] Ideas: assistant recipes open a read-only preview (`/recipes/preview`) with a "Save as a recipe" button; the list row no longer has a save button, and a saved idea opens the saved recipe instead of saving twice
 - [ ] Fixes from the user's phone testing
 - [ ] iOS build via EAS (needs the Apple Developer account; steps in README)
 
 ## Review notes
+
+### Ideas preview (2026-10-19)
+- Held ideas live in memory (`src/recipes/draftStore.ts`) under a key passed as a route param; a reload loses them and the preview says so. Ingredient and step lists moved to `src/recipes/RecipeParts.tsx`, shared with the saved recipe page.
+- Saving goes straight through `save_recipe`; assistant drafts already carry grocery names and store sections, so no labeling pass is needed. Edit stays available on the saved recipe.
+- Verified: `tsc` clean; jest 60 tests (preview save, save failure, no double save, missing idea; store); local browser check of the refactored recipe page and Ideas tab. The chat itself needs the hosted Claude key, so it was not exercised locally.
 
 ### Container size and unit conversion (2026-10-19)
 - `pantry_items.package_quantity/package_unit`; `unit_measure()` and `convert_quantity()` in SQL mirror `MEASURES` and `convertQuantity` in `src/groceries/units.ts`. "oz" is weight; "fl oz" folds into it (existing normalize rule).

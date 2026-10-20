@@ -7,7 +7,7 @@ import { useHousehold } from '@/household/useHousehold';
 import { useDeleteRecipe, useRateRecipe, useRecipe, useRecipes, useUpdateRecipeTags } from '@/recipes/hooks';
 import { useEstimateNutrition, type Nutrition } from '@/ideas/hooks';
 import { useSignedPhotoUrl } from '@/recipes/photos';
-import { formatIngredient, formatMinutes } from '@/recipes/quantity';
+import { IngredientList, StepList, recipeMetaLine } from '@/recipes/RecipeParts';
 import { Chip } from '@/components/Chip';
 import { Stars } from '@/components/Stars';
 import { Stepper } from '@/components/Stepper';
@@ -120,15 +120,7 @@ export default function RecipeDetail() {
 
           <View style={styles.section}>
             <Text style={type.title}>{r.title}</Text>
-            <Text style={type.bodyMuted}>
-              {[
-                r.cuisine,
-                r.prep_minutes != null ? `${formatMinutes(r.prep_minutes)} prep` : null,
-                r.cook_minutes != null ? `${formatMinutes(r.cook_minutes)} cook` : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </Text>
+            <Text style={type.bodyMuted}>{recipeMetaLine(r)}</Text>
             {r.description ? <Text style={type.body}>{r.description}</Text> : null}
             <View style={styles.chips}>
               {r.tags.map((t) => (
@@ -148,33 +140,8 @@ export default function RecipeDetail() {
             <Button title="Add to plan" variant="secondary" loading={addToPlan.isPending} onPress={() => setPickingDay(true)} />
           </View>
 
-          <View style={styles.section}>
-            <Text style={type.heading}>Ingredients</Text>
-            {r.recipe_ingredients.length === 0 ? <Text style={type.bodyMuted}>None listed.</Text> : null}
-            {r.recipe_ingredients.map((ing) => {
-              const f = formatIngredient(ing, factor);
-              return (
-                <View key={ing.id} style={styles.ingredient}>
-                  <Text style={styles.amount}>{f.amount}</Text>
-                  <Text style={styles.ingredientName}>
-                    {f.name}
-                    {f.preparation ? <Text style={type.small}>{`, ${f.preparation}`}</Text> : null}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={type.heading}>Steps</Text>
-            {r.recipe_steps.length === 0 ? <Text style={type.bodyMuted}>None listed.</Text> : null}
-            {r.recipe_steps.map((step, i) => (
-              <View key={step.id} style={styles.step}>
-                <Text style={styles.stepNumber}>{i + 1}</Text>
-                <Text style={[type.body, { flex: 1 }]}>{step.text}</Text>
-              </View>
-            ))}
-          </View>
+          <IngredientList ingredients={r.recipe_ingredients} factor={factor} />
+          <StepList steps={r.recipe_steps} />
 
           <View style={styles.card}>
             <Text style={type.label}>Nutrition per serving</Text>
@@ -291,11 +258,6 @@ const styles = StyleSheet.create({
     borderColor: colors.rule,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
-  ingredient: { flexDirection: 'row', gap: space.md, paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.rule },
-  amount: { width: 84, fontFamily: fonts.bodySemibold, fontSize: 16, color: colors.accent, fontVariant: ['tabular-nums'] },
-  ingredientName: { flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.ink, lineHeight: 22 },
-  step: { flexDirection: 'row', gap: space.md, paddingVertical: 6 },
-  stepNumber: { width: 28, fontFamily: fonts.heading, fontSize: 18, color: colors.accent, fontVariant: ['tabular-nums'] },
   notes: {
     minHeight: 72,
     padding: space.md,
