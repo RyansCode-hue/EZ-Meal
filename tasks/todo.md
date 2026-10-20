@@ -22,7 +22,7 @@ Spec: docs/SPEC.md
 - [x] Ratings and notes per person
 - [x] `save_recipe` RPC: atomic insert/replace of recipe + children
 - [x] Website build (Expo web, PWA manifest, icons) deployed to EAS Hosting
-- [ ] Anthropic API key set as a Supabase secret (user: `supabase secrets set ANTHROPIC_API_KEY=...`)
+- [x] Anthropic API key set as a Supabase secret (organization key; `ANTHROPIC_WORKSPACE_ID` set alongside it 2026-10-19)
 - [ ] User test on the website and on Android (next APK after a few more phases)
 
 ## Phase 2 — Planner

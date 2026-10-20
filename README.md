@@ -2,7 +2,7 @@
 
 Shared meal planning for a two-person household. Expo (React Native) on the front, Supabase on the back, Claude behind Supabase Edge Functions for the smart parts.
 
-Spec: [docs/SPEC.md](docs/SPEC.md). Build plan: [tasks/todo.md](tasks/todo.md).
+Spec: [docs/SPEC.md](docs/SPEC.md). Build plan: [tasks/todo.md](tasks/todo.md). Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md), published at https://claude.ai/artifact/AHrtqMdykYC5eAku7Cudj7 (republish `docs/roadmap.html` when it changes).
 
 ## One-time setup
 

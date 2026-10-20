@@ -1,0 +1,331 @@
+<title>EZ Plan Roadmap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column, the app's own palette and faces; phases are a real sequence, so they carry numbers. */
+:root {
+  --ground: #F6F8F4;
+  --surface: #FFFFFF;
+  --ink: #1B231E;
+  --muted: #59665E;
+  --accent: #1F6B4A;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DDEEE3;
+  --rule: #D5DDD7;
+  --rule-strong: #B9C5BD;
+  --warn: #8A5A0B;
+  --warn-soft: #FBEFD9;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --measure: 46rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #101713; --surface: #17201B; --ink: #E4ECE6; --muted: #9BAAA1;
+    --accent: #6CC79A; --accent-ink: #0E1A13; --accent-soft: #1D3428;
+    --rule: #28342E; --rule-strong: #3A4842; --warn: #E3B25E; --warn-soft: #362A15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #101713; --surface: #17201B; --ink: #E4ECE6; --muted: #9BAAA1;
+  --accent: #6CC79A; --accent-ink: #0E1A13; --accent-soft: #1D3428;
+  --rule: #28342E; --rule-strong: #3A4842; --warn: #E3B25E; --warn-soft: #362A15;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.page {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; color: var(--ink); }
+h1 { font-size: clamp(2.2rem, 6vw, 3.1rem); line-height: 1.02; letter-spacing: -0.02em; }
+h2 { font-size: 1.6rem; line-height: 1.15; letter-spacing: -0.01em; }
+h3 { font-size: 1.2rem; line-height: 1.25; font-weight: 700; }
+p { margin: 0; }
+.label {
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted);
+}
+.muted { color: var(--muted); }
+
+/* Header */
+header { display: flex; flex-direction: column; gap: 14px; }
+.lede { font-size: 1.12rem; max-width: 38rem; }
+.lede strong { font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.9rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Status chips, styled after the app's Plenty / Low / Out control */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-size: 0.78rem; font-weight: 600; line-height: 1; padding: 6px 10px; border-radius: 8px;
+  border: 1px solid transparent;
+}
+.chip.done { background: var(--accent); color: var(--accent-ink); }
+.chip.next { background: var(--accent-soft); color: var(--accent); }
+.chip.later { background: var(--surface); color: var(--muted); border-color: var(--rule-strong); }
+.chip.decide { background: var(--warn-soft); color: var(--warn); }
+.size {
+  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px;
+  font-size: 0.8rem; font-weight: 600; color: var(--muted); border: 1px solid var(--rule-strong);
+  font-variant-numeric: tabular-nums; flex: none;
+}
+
+section { display: flex; flex-direction: column; gap: 18px; }
+.section-head { display: flex; flex-direction: column; gap: 6px; }
+
+/* Where things stand */
+.standing { border-top: 1px solid var(--rule); }
+.standing-row {
+  display: grid; grid-template-columns: 9.5rem 1fr auto; gap: 6px 16px; align-items: baseline;
+  padding: 12px 0; border-bottom: 1px solid var(--rule);
+}
+.standing-row dt { font-weight: 600; }
+.standing-row dd { margin: 0; min-width: 0; color: var(--muted); }
+.standing-row .chip { justify-self: end; }
+
+/* Built so far */
+.built { display: grid; gap: 10px; padding-left: 1.1rem; margin: 0; }
+.built li::marker { color: var(--accent); }
+
+/* Stages and phases */
+.stage-head { display: flex; flex-direction: column; gap: 6px; padding-bottom: 4px; }
+.phase {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;
+}
+.phase-head { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
+.phase-num {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; line-height: 1;
+  color: var(--accent); font-variant-numeric: tabular-nums; min-width: 2ch;
+}
+.phase-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.item {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: start;
+  padding: 12px 0; border-bottom: 1px solid var(--rule);
+}
+.item:last-child { border-bottom: 0; padding-bottom: 0; }
+.item-name { font-weight: 600; }
+.item-note { grid-column: 1 / 2; color: var(--muted); font-size: 0.94rem; min-width: 0; }
+.item .size { grid-row: 1 / span 2; grid-column: 2; }
+.draft-note {
+  background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 0.94rem;
+}
+code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.88em;
+  background: var(--accent-soft); color: var(--ink); padding: 1px 5px; border-radius: 4px;
+}
+
+/* Open decisions */
+.decisions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; counter-reset: d; }
+.decision { display: grid; grid-template-columns: 2rem 1fr; gap: 4px 10px; counter-increment: d; }
+.decision::before {
+  content: counter(d); font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; color: var(--warn);
+  grid-row: 1 / span 3;
+}
+.decision-title { font-weight: 600; }
+.decision > p { color: var(--muted); }
+.models { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.model { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.model h3 { font-size: 1.05rem; }
+.model ol { margin: 0; padding-left: 1.2rem; font-size: 0.93rem; display: grid; gap: 2px; }
+.model p { font-size: 0.86rem; color: var(--muted); }
+
+footer { font-size: 0.88rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+
+@media (max-width: 640px) {
+  .page { padding-block: 28px 48px; gap: 40px; }
+  .standing-row { grid-template-columns: 1fr auto; }
+  .standing-row dd { grid-column: 1 / -1; grid-row: 2; }
+  .phase { padding: 16px; }
+  .phase-head { grid-template-columns: auto 1fr; }
+  .phase-chips { grid-column: 1 / -1; justify-content: flex-start; }
+  .models { grid-template-columns: 1fr; }
+}
+</style>
+
+<main class="page">
+  <header>
+    <span class="label">Household app · Roadmap</span>
+    <h1>EZ Plan Roadmap</h1>
+    <p class="lede">EZ Meal is the meal planner we use today. Next it becomes <strong>EZ Plan</strong>: one shared place to capture and plan meals and household tasks.</p>
+    <div class="meta">
+      <span>Updated October 19, 2026</span>
+      <span>Ryan &amp; household</span>
+    </div>
+    <div class="legend" aria-label="Status key">
+      <span class="chip done">Done</span>
+      <span class="chip next">Next</span>
+      <span class="chip later">Later</span>
+      <span class="chip decide">Decide</span>
+      <span class="muted" style="font-size:0.88rem">Size: <span class="size" aria-hidden="true">S</span> an evening · <span class="size" aria-hidden="true">M</span> a few sessions · <span class="size" aria-hidden="true">L</span> a week or more</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="standing">
+    <div class="section-head">
+      <h2 id="standing">Where things stand</h2>
+    </div>
+    <dl class="standing">
+      <div class="standing-row"><dt>Website</dt><dd>ez-meal.expo.app has everything built so far and updates itself when opened.</dd><span class="chip done">Live</span></div>
+      <div class="standing-row"><dt>Android app</dt><dd>Last built September 4. Missing every change since. Builds paused until the website settles.</dd><span class="chip decide">Behind</span></div>
+      <div class="standing-row"><dt>iPhone app</dt><dd>Not started. Needs the Apple Developer account. The website covers it for now.</dd><span class="chip later">Not started</span></div>
+      <div class="standing-row"><dt>Backend</dt><dd>Database, sign-in, and the Claude features are live. Claude key fixed October 19.</dd><span class="chip done">Live</span></div>
+      <div class="standing-row"><dt>Code backup</dt><dd>12 commits exist only on Ryan's Mac. GitHub push waits on one sign-in step.</dd><span class="chip decide">Mac only</span></div>
+      <div class="standing-row"><dt>Tests</dt><dd>68 app tests, a database check, and integration tests run before each change ships.</dd><span class="chip done">Passing</span></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="built">
+    <div class="section-head">
+      <h2 id="built">Built so far</h2>
+    </div>
+    <ul class="built">
+      <li><strong>The original plan, phases 0 to 8.</strong> Shared household with an invite code, recipe book with paste, photo, file, and link import, weekly planner, grocery list by store aisle, pantry, ideas, notifications, and the website.</li>
+      <li><strong>Since then.</strong> Pantry amounts and container sizes, cooking subtracts from the pantry with lb/oz and cup/gallon conversion, named meals like "Tacos" on the plan, a recipe preview with "Save as a recipe", and a meal chat that builds recipes around an ingredient and remembers household notes.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="stage1">
+    <div class="stage-head">
+      <span class="label">Stage 1</span>
+      <h2 id="stage1">Finish EZ Meal</h2>
+    </div>
+
+    <article class="phase" aria-labelledby="p9">
+      <div class="phase-head">
+        <span class="phase-num">9</span>
+        <h3 id="p9">Back it up and catch the phones up</h3>
+        <div class="phase-chips"><span class="chip next">Next</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Push the code to a private GitHub repo</span><span class="size" aria-label="Size S">S</span><span class="item-note">Ryan runs <code>gh auth login</code> once; Claude creates the repo and pushes.</span></li>
+        <li class="item"><span class="item-name">Run the untested checks on the live site</span><span class="size" aria-label="Size S">S</span><span class="item-note">A receipt photo, a recipe-card photo, a recipe link, a nutrition estimate, and a meal chat.</span></li>
+        <li class="item"><span class="item-name">New Android build with everything since September</span><span class="size" aria-label="Size S">S</span><span class="item-note">When Ryan says the website is stable. Then retest notifications on the phone.</span></li>
+        <li class="item"><span class="item-name">Clean up the task checklist</span><span class="size" aria-label="Size S">S</span><span class="item-note">Close what is done and fold the rest into this roadmap.</span></li>
+      </ul>
+    </article>
+
+    <article class="phase" aria-labelledby="p10">
+      <div class="phase-head">
+        <span class="phase-num">10</span>
+        <h3 id="p10">Smarter pantry and chat</h3>
+        <div class="phase-chips"><span class="chip next">Next</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Grocery list subtracts pantry amounts</span><span class="size" aria-label="Size M">M</span><span class="item-note">Today only Plenty and Low count. With amounts and conversion in place, "need 2 lb, have 1 lb" can list 1 lb.</span></li>
+        <li class="item"><span class="item-name">Keep the meal chat after a reload</span><span class="size" aria-label="Size M">M</span><span class="item-note">Notes already last; the conversation and unsaved ideas do not yet.</span></li>
+        <li class="item"><span class="item-name">"Find a recipe" from a named meal</span><span class="size" aria-label="Size S">S</span><span class="item-note">Tap "Tacos" on the plan and ask the chat for a recipe that fits.</span></li>
+        <li class="item"><span class="item-name">Receipt reader picks up package sizes</span><span class="size" aria-label="Size S">S</span><span class="item-note">"16 oz box" on a receipt fills in the container size.</span></li>
+      </ul>
+    </article>
+
+    <article class="phase" aria-labelledby="p11">
+      <div class="phase-head">
+        <span class="phase-num">11</span>
+        <h3 id="p11">iPhone app</h3>
+        <div class="phase-chips"><span class="chip later">Later</span><span class="chip decide">Decide</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Apple Developer Program</span><span class="size" aria-label="Size S">S</span><span class="item-note">$99 a year. Timing is Ryan's call.</span></li>
+        <li class="item"><span class="item-name">iOS build and TestFlight install</span><span class="size" aria-label="Size M">M</span><span class="item-note">Steps are in the README. Push notifications need Apple's key.</span></li>
+      </ul>
+    </article>
+  </section>
+
+  <section aria-labelledby="stage2">
+    <div class="stage-head">
+      <span class="label">Stage 2 · Draft</span>
+      <h2 id="stage2">Become EZ Plan</h2>
+    </div>
+    <p class="draft-note">This stage is a draft. The capture model, the first open decision below, shapes the inbox, tasks, and navigation.</p>
+
+    <article class="phase" aria-labelledby="p12">
+      <div class="phase-head">
+        <span class="phase-num">12</span>
+        <h3 id="p12">Rename to EZ Plan</h3>
+        <div class="phase-chips"><span class="chip later">After Stage 1</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">New name and icon in the app and website</span><span class="size" aria-label="Size S">S</span><span class="item-note">The Android package id stays the same, so the installed app updates instead of reinstalling.</span></li>
+        <li class="item"><span class="item-name">New website address</span><span class="size" aria-label="Size S">S</span><span class="item-note">Proposed ez-plan.expo.app. The old ez-meal link keeps working so the home-screen icon still opens.</span></li>
+        <li class="item"><span class="item-name">Rename the repo and project folder</span><span class="size" aria-label="Size S">S</span><span class="item-note">History stays intact.</span></li>
+      </ul>
+    </article>
+
+    <article class="phase" aria-labelledby="p13">
+      <div class="phase-head">
+        <span class="phase-num">13</span>
+        <h3 id="p13">Capture and tasks</h3>
+        <div class="phase-chips"><span class="chip later">Later</span><span class="chip decide">Decide</span></div>
+      </div>
+      <ul class="items">
+        <li class="item"><span class="item-name">Pick the capture model</span><span class="size" aria-label="Size S">S</span><span class="item-note">See the open decision below.</span></li>
+        <li class="item"><span class="item-name">Shared inbox</span><span class="size" aria-label="Size M">M</span><span class="item-note">One place to drop anything: typed, a photo, later voice. Claude sorts each item into a task, a grocery item, a meal idea, or a recipe, and either of you can correct it.</span></li>
+        <li class="item"><span class="item-name">Tasks</span><span class="size" aria-label="Size L">L</span><span class="item-note">Owner (Ryan, his wife, or both), due date, repeat, and done. Tasks show on the week view beside meals.</span></li>
+        <li class="item"><span class="item-name">Task reminders</span><span class="size" aria-label="Size M">M</span><span class="item-note">Built on the meal notifications: due today, and "your partner gave you a task".</span></li>
+        <li class="item"><span class="item-name">Navigation</span><span class="size" aria-label="Size M">M</span><span class="item-note">Five tabs fit a phone. Proposal: Week, Inbox, Tasks, Meals (recipes, groceries, and pantry inside), Ideas.</span></li>
+      </ul>
+    </article>
+  </section>
+
+  <section aria-labelledby="decisions">
+    <div class="section-head">
+      <h2 id="decisions">Open decisions</h2>
+    </div>
+    <ol class="decisions">
+      <li class="decision">
+        <span class="decision-title">Which capture model should EZ Plan follow?</span>
+        <p>Each one leads to a different inbox and task layout.</p>
+        <div class="models">
+          <div class="model">
+            <h3>CODE</h3>
+            <ol><li>Capture</li><li>Organize</li><li>Distill</li><li>Express</li></ol>
+            <p>Building a Second Brain. Steps for handling what you save.</p>
+          </div>
+          <div class="model">
+            <h3>PARA</h3>
+            <ol><li>Projects</li><li>Areas</li><li>Resources</li><li>Archives</li></ol>
+            <p>The same author's four places to file things.</p>
+          </div>
+          <div class="model">
+            <h3>GTD</h3>
+            <ol><li>Capture</li><li>Clarify</li><li>Organize</li><li>Reflect</li><li>Engage</li></ol>
+            <p>Getting Things Done. Five steps, built around an inbox and next actions.</p>
+          </div>
+        </div>
+      </li>
+      <li class="decision">
+        <span class="decision-title">When should Android builds resume?</span>
+        <p>Phase 9 assumes soon, once the website feels stable.</p>
+      </li>
+      <li class="decision">
+        <span class="decision-title">When to buy the Apple Developer account?</span>
+        <p>It gates the iPhone app in Phase 11.</p>
+      </li>
+      <li class="decision">
+        <span class="decision-title">Should chat history be per phone or shared?</span>
+        <p>Shared means either of you can pick up a conversation the other started.</p>
+      </li>
+    </ol>
+  </section>
+
+  <footer>The source of truth is <code>docs/ROADMAP.md</code> in the project. This page is republished from it when the plan changes.</footer>
+</main>
